@@ -217,10 +217,11 @@ namespace Picross
             g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Unknown));
 
             // Draw the square colours
-            if (fillSquares)
+            if (fillSquares) {
                 for (int y = 0; y < this.Height; y++)
                     for (int x = 0; x < this.Width; x++)
                         g.FillRectangle(this.GetBrush(this[x, y], darkerBackground), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+            }
 
             // Draw the hover
             Point hover = this.mouse2point(mouse, squareSize);
