@@ -17,12 +17,10 @@ namespace Picross
         private int[,] puzzle;
         private int[,] original;
 
-        private Color[] colors; // Array is 0 based, so const values + 2.
-
         private bool editorMode;
 
         public Point Offset;
-        public Point InnerOffset { get; private set; }
+        public Point InnerOffset { get; set; }
         private Point size;
 
         // Getters and setters
@@ -58,19 +56,7 @@ namespace Picross
             }
         }
 
-        public Color GetColor(int type) {
-            return this.colors[type + 2];
-        }
-        public bool SetColor(int type, Color color) {
-            // Don't set a colour that is already used
-            for (int i = 0; i < this.colors.Length; i++)
-                if (this.colors[i].R == color.R && this.colors[i].G == color.G && this.colors[i].B == color.B)
-                    return false;
-            // Set the colour
-            this.colors[type + 2] = color;
-            return true;
-        }
-
+        // TODO: change name to reflect the kind of size this represents - the size of the canvas? Or the size of the puzzle...
         public Point Size {
             get { return this.size; }
             set {
@@ -87,10 +73,6 @@ namespace Picross
             this.Offset = new Point(10, 10);
             this.InnerOffset = new Point(120, 100);
             this.Size = new Point(20 * w, 20 * h);
-            Settings s = Settings.Get;
-            this.colors = new Color[5] { 
-                s.GetColor(Decoration), s.GetColor(Empty), s.GetColor(Unknown), s.GetColor(Black), s.GetColor(Red) 
-            };
         }
 
         public void Clear() {
@@ -100,12 +82,12 @@ namespace Picross
         }
 
         public void MouseClick(Point mouse, int value) {
-            Point p = this.mouse2point(mouse, (this.Size.X - this.InnerOffset.X) / this.Width);
+            Point p = this.Mouse2Point(mouse, (this.Size.X - this.InnerOffset.X) / this.Width);
             doMouseClick(p, value);
         }
         public void MouseClick(Point oldMouse, Point newMouse, int value) {
-            Point from = this.mouse2point(oldMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
-            Point to = this.mouse2point(newMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
+            Point from = this.Mouse2Point(oldMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
+            Point to = this.Mouse2Point(newMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
             if (from.Y == to.Y) {
                 while (to.X != from.X) {
                     doMouseClick(to, value);
@@ -121,15 +103,6 @@ namespace Picross
             else {
                 doMouseClick(to, value);
             }
-        }
-
-        public void Draw(Graphics graphics, Point mouse, int selectedColour = Black) {
-            // Draw it to a bitmap
-            int squareSize = (this.Size.X - this.InnerOffset.X) / this.Width;
-            Bitmap bmp = this.drawToBitmap(squareSize, mouse, selectedColour, true, Settings.Get.DarkerBackground);
-
-            // Draw that bitmap to form
-            graphics.DrawImage(bmp, this.Offset);
         }
 
         public void Move(Point move) {
@@ -183,10 +156,6 @@ namespace Picross
             return puzzle;
         }
 
-        public Bitmap ToBitmap(bool solution) {
-            return this.drawToBitmap(32, new Point(-1, -1), Black, solution);
-        }
-
         public static Puzzle FromString(string puzzle) {
             // Remove whitespace, [ and ] and get the height of the puzzle on the fly
             puzzle = puzzle.Replace(" ", "").Replace("\n", "");
@@ -209,74 +178,6 @@ namespace Picross
             return result;
         }
 
-        // Helper methods
-        private Bitmap drawToBitmap(int squareSize, Point mouse, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
-            // Prepare the bitmap
-            Bitmap bmp = new Bitmap(this.InnerOffset.X + squareSize * this.Width + 1, this.InnerOffset.Y + squareSize * this.Height + 1);
-            Graphics g = Graphics.FromImage(bmp);
-            g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Unknown));
-
-            // Draw the square colours
-            if (fillSquares) {
-                for (int y = 0; y < this.Height; y++)
-                    for (int x = 0; x < this.Width; x++)
-                        g.FillRectangle(this.GetBrush(this[x, y], darkerBackground), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
-            }
-
-            // Draw the hover
-            Point hover = this.mouse2point(mouse, squareSize);
-            if (this.IsInRange(hover)) {
-                Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
-                g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
-            }
-
-            // Draw the horizontal (row) and vertical (col) numbers (also check if they are not too long, if so, change the inneroffset)
-            Font f = new Font("Arial", 12);
-            int yExtra = (squareSize - (int)g.MeasureString("1", f).Height) / 2 + 1;
-            for (int y = 0; y < this.Height; y++) {
-                string nrs = this.getRowNumbers(y);
-                g.DrawString(nrs, f, Brushes.Black, this.InnerOffset.X - g.MeasureString(nrs, f).Width - 4, this.InnerOffset.Y + y * squareSize + yExtra);
-                if (g.MeasureString(nrs, f).Width > this.InnerOffset.X)
-                    this.InnerOffset = new Point((int)g.MeasureString(nrs, f).Width + 4, this.InnerOffset.Y);
-            }
-            for (int x = 0; x < this.Width; x++) {
-                string nrs = this.getColNumbers(x);
-                g.DrawString(nrs, f, Brushes.Black, this.InnerOffset.X + x * squareSize + (squareSize - (int)g.MeasureString(nrs, f).Width) / 2, this.InnerOffset.Y - g.MeasureString(nrs, f).Height);
-                if (g.MeasureString(nrs, f).Height > this.InnerOffset.Y)
-                    this.InnerOffset = new Point(this.InnerOffset.X, (int)g.MeasureString(nrs, f).Height + 1);
-            }
-
-            // Draw the horizontal and vertical lines
-            for (int y = 0; y < this.Height + 1; y++)
-                g.DrawLine(this.GetPen(y, this.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
-            for (int x = 0; x < this.Width + 1; x++)
-                g.DrawLine(this.GetPen(x, this.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
-
-            // Override grey lines
-            for (int y = 0; y < this.Height; y += 5)
-                g.DrawLine(this.GetPen(y, this.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
-            for (int x = 0; x < this.Width; x += 5)
-                g.DrawLine(this.GetPen(x, this.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
-            g.DrawLine(this.GetPen(this.Height, this.Height), 1, this.InnerOffset.Y + squareSize * this.Height, bmp.Width - 1, this.InnerOffset.Y + squareSize * this.Height);
-
-            // Draw the lines to close the number boxes
-            g.DrawLine(this.GetPen(0, 0), 1, this.InnerOffset.Y, 1, bmp.Height - 1);
-            g.DrawLine(this.GetPen(0, 0), this.InnerOffset.X, 1, bmp.Width - 1, 1);
-
-            // Draw a minimap
-            if (fillSquares) {
-                squareSize = 2;
-                Point offset = new Point((this.InnerOffset.X - squareSize * this.Width) / 2, (this.InnerOffset.Y - squareSize * this.Height) / 2);
-                for (int y = 0; y < this.Height; y++)
-                    for (int x = 0; x < this.Width; x++)
-                        if (this[x, y] == Black || this[x, y] == Red)
-                            g.FillRectangle(new SolidBrush(Color.Black), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
-            }
-
-            // Return the bitmap
-            return bmp;
-        }
-
         public bool IsInRange(Point p) {
             return this.IsInRange(p.X, p.Y);
         }
@@ -293,8 +194,8 @@ namespace Picross
                 return 0;
             // Check if both mouse coordinates map to the same point, if not, the mouse moved significantly.
             int squareSize = (this.Size.X - this.InnerOffset.X) / this.Width;
-            Point a = this.mouse2point(lastMouse, squareSize);
-            Point b = this.mouse2point(nextMouse, squareSize);
+            Point a = this.Mouse2Point(lastMouse, squareSize);
+            Point b = this.Mouse2Point(nextMouse, squareSize);
             // Figure out how they moved
             if (a.X == b.X) {
                 if (a.Y == b.Y)
@@ -308,6 +209,21 @@ namespace Picross
             }
         }
 
+        // Helper methods
+        public Point Mouse2Point(Point mouse, int squareSize) {
+            // Get the array index corresponding to the mouse coordinate
+            return new Point((mouse.X - this.Offset.X - this.InnerOffset.X) / squareSize, (mouse.Y - this.Offset.Y - this.InnerOffset.Y) / squareSize);
+        }
+
+        public string GetRowNumbers(int y) {
+            List<int> nrs = this.getRowNumberList(y);
+            return string.Join<int>(" ", nrs);
+        }
+        public string GetColNumbers(int x) {
+            List<int> nrs = this.getColNumberList(x);
+            return string.Join<int>("\n", nrs);
+        }
+
         private void doMouseClick(Point p, int value) {
             // Do a mouseclick at the puzzle coordinate system's p.
             if (this.IsInRange(p)) {
@@ -316,25 +232,6 @@ namespace Picross
                 else
                     this[p] = value;
             }
-        }
-
-        private Point mouse2point(Point mouse, int squareSize) {
-            // Get the array index corresponding to the mouse coordinate
-            return new Point((mouse.X - this.Offset.X - this.InnerOffset.X) / squareSize, (mouse.Y - this.Offset.Y - this.InnerOffset.Y) / squareSize);
-        }
-
-        private Brush GetBrush(int type, bool darkerBackground) {
-            // Get the brush with the right colour (used for drawing squares)
-            if (darkerBackground && type == Puzzle.Unknown)
-                return Brushes.LightGray;
-            return new SolidBrush(this.GetColor(type));
-        }
-
-        private Pen GetPen(int i, int last) {
-            // Get the pen with the right colour (used for drawing lines)
-            if (i % 5 == 0 || i == last)
-                return new Pen(Color.Black, 2);
-            return new Pen(Color.Gray, 2);
         }
 
         private List<int> getRowNumberList(int y) {
@@ -394,15 +291,6 @@ namespace Picross
             return nrs;
         }
 
-        private string getRowNumbers(int y) {
-            List<int> nrs = this.getRowNumberList(y);
-            return string.Join<int>(" ", nrs);
-        }
-        private string getColNumbers(int x) {
-            List<int> nrs = this.getColNumberList(x);
-            return string.Join<int>("\n", nrs);
-        }
-
         private bool isEmpty(int[,] pzl) {
             // Check if the array is an empty array
             for (int y = 0; y < pzl.GetLength(1); y++)
@@ -413,6 +301,24 @@ namespace Picross
         }
 
         // Solve methods
+        public int Check(bool strict) {
+            // Return 0 if mistake found, 2 if puzzle is finished and 1 if no mistake found but not yet finished. 
+            bool finished = true;
+            for (int y = 0; y < this.Height; y++)
+                for (int x = 0; x < this.Width; x++) {
+                    // Mistake
+                    if ((this[x, y] > 0 && this.original[x, y] <= 0))
+                        return 0;
+                    // Strict mistake (filled in a blank spot while it should be filled).
+                    if (strict && this[x, y] < 0 && this.original[x, y] > 0)
+                        return 0;
+                    // Not yet finished
+                    if (this[x, y] <= 0 && this.original[x, y] > 0)
+                        finished = false;
+                }
+            return finished ? 2 : 1;
+        }
+
         public bool Solve(bool setPuzzle) {
             // Only allow replacing the puzzle in play mode
             if (this.EditorMode)
@@ -555,24 +461,6 @@ namespace Picross
             if (sum >= this.Width - x)
                 return false;
             return true;
-        }
-
-        public int Check(bool strict) {
-            // Return 0 if mistake found, 2 if puzzle is finished and 1 if no mistake found but not yet finished. 
-            bool finished = true;
-            for (int y = 0; y < this.Height; y++)
-                for (int x = 0; x < this.Width; x++) {
-                    // Mistake
-                    if ((this[x, y] > 0 && this.original[x, y] <= 0))
-                        return 0;
-                    // Strict mistake (filled in a blank spot while it should be filled).
-                    if (strict && this[x, y] < 0 && this.original[x, y] > 0)
-                        return 0;
-                    // Not yet finished
-                    if (this[x, y] <= 0 && this.original[x, y] > 0)
-                        finished = false;
-                }
-            return finished ? 2 : 1;
         }
     }
 }

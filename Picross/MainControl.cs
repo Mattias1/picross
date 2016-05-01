@@ -8,6 +8,7 @@ namespace Picross
     class MainControl : SeaUserControl
     {
         Puzzle puzzle;
+        PuzzlePainter puzzlePainter;
         Point mouse;
         bool mouseDown;
         string fileName;
@@ -16,7 +17,7 @@ namespace Picross
 
         public MainControl() {
             // Set some members
-            this.puzzle = new Puzzle(20, 15, Settings.Get.EditorMode);
+            this.setNewPuzzleObject(new Puzzle(20, 15, Settings.Get.EditorMode));
             this.mouse = new Point(-1, -1);
             this.fileName = "";
 
@@ -27,9 +28,14 @@ namespace Picross
             this.addControls();
         }
 
+        private void setNewPuzzleObject(Puzzle puzzle) {
+            this.puzzle = puzzle;
+            this.puzzlePainter = new PuzzlePainter(this.puzzle);
+        }
+
         private void manageEvents() {
             // The paint event
-            this.Paint += (o, e) => { this.puzzle.Draw(e.Graphics, this.mouse); };
+            this.Paint += (o, e) => { this.puzzlePainter.Draw(e.Graphics, this.mouse); };
 
             // The mouse events
             this.MouseClick += (o, e) => {
@@ -82,7 +88,7 @@ namespace Picross
             this.btnNewPuzzle.Click += (o, e) => {
                 SizeDialog dialog = new SizeDialog("Create a new picross puzzle.");
                 if (dialog.ShowDialog() == DialogResult.OK) {
-                    this.puzzle = new Puzzle(dialog.ChosenSize.X, dialog.ChosenSize.Y, Settings.Get.EditorMode);
+                    this.setNewPuzzleObject(new Puzzle(dialog.ChosenSize.X, dialog.ChosenSize.Y, Settings.Get.EditorMode));
                     this.OnResize();
                 }
             };
@@ -130,8 +136,8 @@ namespace Picross
                         string ext = Path.GetExtension(dialog.FileName);
                         if (ext.ToLower() == ".png" || ext.ToLower() == ".jpg") {
                             // Export the puzzle as image
-                            Bitmap bmp = this.puzzle.ToBitmap(false);
-                            Bitmap bmpSolution = this.puzzle.ToBitmap(true);
+                            Bitmap bmp = this.puzzlePainter.ToBitmap(false);
+                            Bitmap bmpSolution = this.puzzlePainter.ToBitmap(true);
                             bmp.Save(dialog.FileName);
                             bmpSolution.Save(Path.Combine(Path.GetDirectoryName(dialog.FileName), "Solution" + Path.GetFileName(dialog.FileName)));
                         }
@@ -190,11 +196,11 @@ namespace Picross
 
             // The colour buttons
             this.btnColorBlack = new Btn("", this);
-            this.btnColorBlack.BackColor = this.puzzle.GetColor(Puzzle.Black);
+            this.btnColorBlack.BackColor = this.puzzlePainter.GetColor(Puzzle.Black);
             this.btnColorBlack.Size = new Size(this.btnColorBlack.Height, this.btnColorBlack.Height);
             this.btnColorBlack.MouseDown += this.colorBtnMouseDown;
             this.btnColorEmpty = new Btn("", this);
-            this.btnColorEmpty.BackColor = this.puzzle.GetColor(Puzzle.Empty);
+            this.btnColorEmpty.BackColor = this.puzzlePainter.GetColor(Puzzle.Empty);
             this.btnColorEmpty.Size = this.btnColorBlack.Size;
             this.btnColorEmpty.MouseDown += this.colorBtnMouseDown;
 
@@ -244,19 +250,19 @@ namespace Picross
         private void colorBtnMouseDown(object o, MouseEventArgs e) {
             Btn btn = (Btn)o;
             if (e.Button == MouseButtons.Left) {
-                if (btn.BackColor == this.puzzle.GetColor(Puzzle.Black))
-                    btn.BackColor = this.puzzle.GetColor(Puzzle.Red);
-                else if (btn.BackColor == this.puzzle.GetColor(Puzzle.Red))
-                    btn.BackColor = this.puzzle.GetColor(Puzzle.Black);
-                else if (btn.BackColor == this.puzzle.GetColor(Puzzle.Empty))
-                    btn.BackColor = this.puzzle.GetColor(Puzzle.Decoration);
-                else if (btn.BackColor == this.puzzle.GetColor(Puzzle.Decoration))
-                    btn.BackColor = this.puzzle.GetColor(Puzzle.Empty);
+                if (btn.BackColor == this.puzzlePainter.GetColor(Puzzle.Black))
+                    btn.BackColor = this.puzzlePainter.GetColor(Puzzle.Red);
+                else if (btn.BackColor == this.puzzlePainter.GetColor(Puzzle.Red))
+                    btn.BackColor = this.puzzlePainter.GetColor(Puzzle.Black);
+                else if (btn.BackColor == this.puzzlePainter.GetColor(Puzzle.Empty))
+                    btn.BackColor = this.puzzlePainter.GetColor(Puzzle.Decoration);
+                else if (btn.BackColor == this.puzzlePainter.GetColor(Puzzle.Decoration))
+                    btn.BackColor = this.puzzlePainter.GetColor(Puzzle.Empty);
             }
             else if (e.Button == MouseButtons.Right) {
                 int type = 0;
                 for (int i = -2; i < 3; i++)
-                    if (btn.BackColor == this.puzzle.GetColor(i)) {
+                    if (btn.BackColor == this.puzzlePainter.GetColor(i)) {
                         type = i;
                         break;
                     }
@@ -269,7 +275,7 @@ namespace Picross
         }
 
         private bool changeColor(Btn btn, int type, Color color) {
-            if (!this.puzzle.SetColor(type, color)) {
+            if (!this.puzzlePainter.SetColor(type, color)) {
                 MessageBox.Show("This colour is already in use.", "Colour", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
@@ -284,7 +290,7 @@ namespace Picross
             try {
                 using (StreamReader reader = new StreamReader(filename)) {
                     // Load the puzzle
-                    this.puzzle = Puzzle.FromString(reader.ReadToEnd());
+                    this.setNewPuzzleObject(Puzzle.FromString(reader.ReadToEnd()));
                     this.puzzle.EditorMode = Settings.Get.EditorMode;
                     this.OnResize();
                     return true;
@@ -298,9 +304,9 @@ namespace Picross
 
         public void Draw() {
             // Draw the puzzle, and check if the innerOffset is changed
-            int selectedColour = this.btnColorBlack.BackColor == this.puzzle.GetColor(Puzzle.Black) ? Puzzle.Black : Puzzle.Red;
+            int selectedColour = this.btnColorBlack.BackColor == this.puzzlePainter.GetColor(Puzzle.Black) ? Puzzle.Black : Puzzle.Red;
             Point innerOffset = this.puzzle.InnerOffset;
-            this.puzzle.Draw(this.CreateGraphics(), this.mouse, selectedColour);
+            this.puzzlePainter.Draw(this.CreateGraphics(), this.mouse, selectedColour);
             if (innerOffset != this.puzzle.InnerOffset)
                 this.OnResize();
         }
@@ -329,13 +335,13 @@ namespace Picross
 
         private int mouseButton2Type(MouseButtons buttons) {
             if (buttons == MouseButtons.Left) {
-                if (this.btnColorBlack.BackColor == this.puzzle.GetColor(Puzzle.Black))
+                if (this.btnColorBlack.BackColor == this.puzzlePainter.GetColor(Puzzle.Black))
                     return Puzzle.Black;
                 else
                     return Puzzle.Red;
             }
             if (buttons == MouseButtons.Right) {
-                if (this.btnColorEmpty.BackColor == this.puzzle.GetColor(Puzzle.Empty))
+                if (this.btnColorEmpty.BackColor == this.puzzlePainter.GetColor(Puzzle.Empty))
                     return Puzzle.Empty;
                 else
                     return Puzzle.Decoration;

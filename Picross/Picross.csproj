@@ -55,6 +55,7 @@
     <Compile Include="MattyControls.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="PuzzlePainter.cs" />
     <Compile Include="SizeDialog.cs">
       <SubType>Form</SubType>
     </Compile>
