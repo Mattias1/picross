@@ -31,6 +31,7 @@ namespace Picross
         private void setNewPuzzleObject(Puzzle puzzle) {
             this.puzzle = puzzle;
             this.puzzlePainter = new PuzzlePainter(this.puzzle);
+            this.puzzle.SetPainterReference(this.puzzlePainter);
         }
 
         private void manageEvents() {
@@ -305,9 +306,9 @@ namespace Picross
         public void Draw() {
             // Draw the puzzle, and check if the innerOffset is changed
             int selectedColour = this.btnColorBlack.BackColor == this.puzzlePainter.GetColor(Puzzle.Black) ? Puzzle.Black : Puzzle.Red;
-            Point innerOffset = this.puzzle.InnerOffset;
+            Point innerOffset = this.puzzlePainter.InnerOffset;
             this.puzzlePainter.Draw(this.CreateGraphics(), this.mouse, selectedColour);
-            if (innerOffset != this.puzzle.InnerOffset)
+            if (innerOffset != this.puzzlePainter.InnerOffset)
                 this.OnResize();
         }
 
@@ -329,7 +330,7 @@ namespace Picross
             this.cbStrictChecking.LocateFrom(this.cbDarkerBackground, Btn.Horizontal.CopyLeft, Btn.Vertical.Top);
 
             // The puzzle location and size
-            this.puzzle.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);
+            this.puzzlePainter.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);
             this.Invalidate();
         }
 

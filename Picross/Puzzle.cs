@@ -19,9 +19,7 @@ namespace Picross
 
         private bool editorMode;
 
-        public Point Offset;
-        public Point InnerOffset { get; set; }
-        private Point size;
+        private PuzzlePainter painter;
 
         // Getters and setters
         public int this[int x, int y] {
@@ -56,23 +54,15 @@ namespace Picross
             }
         }
 
-        // TODO: change name to reflect the kind of size this represents - the size of the canvas? Or the size of the puzzle...
-        public Point Size {
-            get { return this.size; }
-            set {
-                int squareSize = Math.Max(5, Math.Min((value.X - this.InnerOffset.X) / this.Width, (value.Y - this.InnerOffset.Y) / this.Height)); // Minimum square size is 5
-                this.size = new Point(this.InnerOffset.X + squareSize * this.Width, this.InnerOffset.Y + squareSize * this.Height);
-            }
-        }
-
         // Methods for communication with the outside world
         public Puzzle(int w, int h, bool editormode) {
             this.original = new int[w, h];
             this.puzzle = this.original;
             this.EditorMode = editormode; // This will also set this.puzzle when in playmode.
-            this.Offset = new Point(10, 10);
-            this.InnerOffset = new Point(120, 100);
-            this.Size = new Point(20 * w, 20 * h);
+        }
+
+        public void SetPainterReference(PuzzlePainter painter) {
+            this.painter = painter;
         }
 
         public void Clear() {
@@ -82,12 +72,12 @@ namespace Picross
         }
 
         public void MouseClick(Point mouse, int value) {
-            Point p = this.Mouse2Point(mouse, (this.Size.X - this.InnerOffset.X) / this.Width);
+            Point p = this.Mouse2Point(mouse, this.painter.CalculateSquareSize());
             doMouseClick(p, value);
         }
         public void MouseClick(Point oldMouse, Point newMouse, int value) {
-            Point from = this.Mouse2Point(oldMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
-            Point to = this.Mouse2Point(newMouse, (this.Size.X - this.InnerOffset.X) / this.Width);
+            Point from = this.Mouse2Point(oldMouse, this.painter.CalculateSquareSize());
+            Point to = this.Mouse2Point(newMouse, this.painter.CalculateSquareSize());
             if (from.Y == to.Y) {
                 while (to.X != from.X) {
                     doMouseClick(to, value);
@@ -193,7 +183,7 @@ namespace Picross
             if (lastMouse.X == nextMouse.X && lastMouse.Y == nextMouse.Y)
                 return 0;
             // Check if both mouse coordinates map to the same point, if not, the mouse moved significantly.
-            int squareSize = (this.Size.X - this.InnerOffset.X) / this.Width;
+            int squareSize = (this.painter.Size.X - this.painter.InnerOffset.X) / this.Width;
             Point a = this.Mouse2Point(lastMouse, squareSize);
             Point b = this.Mouse2Point(nextMouse, squareSize);
             // Figure out how they moved
@@ -212,7 +202,7 @@ namespace Picross
         // Helper methods
         public Point Mouse2Point(Point mouse, int squareSize) {
             // Get the array index corresponding to the mouse coordinate
-            return new Point((mouse.X - this.Offset.X - this.InnerOffset.X) / squareSize, (mouse.Y - this.Offset.Y - this.InnerOffset.Y) / squareSize);
+            return new Point((mouse.X - this.painter.Offset.X - this.painter.InnerOffset.X) / squareSize, (mouse.Y - this.painter.Offset.Y - this.painter.InnerOffset.Y) / squareSize);
         }
 
         public string GetRowNumbers(int y) {

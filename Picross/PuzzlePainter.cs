@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace Picross
 {
@@ -6,15 +8,32 @@ namespace Picross
     {
         private Puzzle puzzle;
         private Color[] colors; // Array is 0 based, so const values + 2.
+        private Font numberFont;
 
-        public Point InnerOffset
+        public Point Offset;
+        public Point InnerOffset { get; set; }
+        private Point size;
+        private Point maxSize;
+
+        public Point Size
         {
-            get { return this.puzzle.InnerOffset; }
-            set { this.puzzle.InnerOffset = value; }
+            get { return this.size; }
+            set
+            {
+                this.maxSize = value;
+                int squareSize = Math.Max(5, Math.Min((value.X - this.InnerOffset.X) / this.puzzle.Width, (value.Y - this.InnerOffset.Y) / this.puzzle.Height)); // Minimum square size is 5
+                this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width, this.InnerOffset.Y + squareSize * this.puzzle.Height);
+            }
         }
 
         public PuzzlePainter(Puzzle puzzle) {
             this.puzzle = puzzle;
+            this.numberFont = new Font("Arial", 12);
+
+            this.Offset = new Point(10, 10);
+            this.InnerOffset = new Point(120, 100);
+            this.Size = new Point(20 * this.puzzle.Width, 20 * this.puzzle.Height);
+
             Settings s = Settings.Get;
             this.colors = new Color[5] {
                 s.GetColor(Puzzle.Decoration), s.GetColor(Puzzle.Empty), s.GetColor(Puzzle.Unknown), s.GetColor(Puzzle.Black), s.GetColor(Puzzle.Red)
@@ -36,30 +55,86 @@ namespace Picross
 
         public void Draw(Graphics graphics, Point mouse, int selectedColour = Puzzle.Black) {
             // Draw it to a bitmap
-            int squareSize = (this.puzzle.Size.X - this.InnerOffset.X) / this.puzzle.Width;
+            int squareSize;
+            adjustToNumberSizes(out squareSize);
             Bitmap bmp = this.drawToBitmap(squareSize, mouse, selectedColour, true, Settings.Get.DarkerBackground);
 
             // Draw that bitmap to form
-            graphics.DrawImage(bmp, this.puzzle.Offset);
+            graphics.DrawImage(bmp, this.Offset);
         }
 
         public Bitmap ToBitmap(bool solution) {
             return this.drawToBitmap(32, new Point(-1, -1), Puzzle.Black, solution);
         }
 
-        private Bitmap drawToBitmap(int squareSize, Point mouse, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
-            // Prepare the bitmap
-            Bitmap bmp = new Bitmap(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
-            Graphics g = Graphics.FromImage(bmp);
-            g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Puzzle.Unknown));
+        public int CalculateSquareSize() {
+            return (this.Size.X - this.InnerOffset.X) / this.puzzle.Width;
+        }
 
-            drawSquares(squareSize, fillSquares, darkerBackground, g);
-            drawHover(squareSize, mouse, selectedColour, g);
-            changeInnerOffsetAndDrawNumbers(squareSize, g);
-            drawLines(squareSize, bmp, g);
-            drawMinimap(fillSquares, g);
+        private bool adjustToNumberSizes(out int squareSize) {
+            bool needsResizing = false;
+
+            // Update InnerOffset width
+            for (int y = 0; y < this.puzzle.Height; y++) {
+                string nrs = this.puzzle.GetRowNumbers(y);
+                int nrsWidth = TextRenderer.MeasureText(nrs, this.numberFont).Width;
+                if (nrsWidth > this.InnerOffset.X) {
+                    this.InnerOffset = new Point(nrsWidth + 6, this.InnerOffset.Y);
+                    needsResizing = true;
+                }
+            }
+            // Update InnerOffset height
+            for (int x = 0; x < this.puzzle.Width; x++) {
+                string nrs = this.puzzle.GetColNumbers(x);
+                int nrsHeight = TextRenderer.MeasureText(nrs, this.numberFont).Height;
+                if (nrsHeight > this.InnerOffset.Y) {
+                    this.InnerOffset = new Point(this.InnerOffset.X, nrsHeight + 8);
+                    needsResizing = true;
+                }
+            }
+
+            // Update the Size and squaresize
+            if (needsResizing)
+                this.Size = this.maxSize;
+            squareSize = this.CalculateSquareSize();
+
+            return needsResizing;
+        }
+
+        private Bitmap drawToBitmap(int squareSize, Point mouse, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
+            Graphics g;
+            Bitmap bmp = this.initBitmap(squareSize, darkerBackground, out g);
+
+            this.drawNumbers(squareSize, g);
+            this.drawSquares(squareSize, fillSquares, darkerBackground, g);
+            this.drawHover(squareSize, mouse, selectedColour, g);
+            this.drawLines(squareSize, bmp, g);
+            this.drawMinimap(fillSquares, g);
 
             return bmp;
+        }
+
+        private Bitmap initBitmap(int squareSize, bool darkerBackground, out Graphics g) {
+            Bitmap bmp = new Bitmap(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
+            g = Graphics.FromImage(bmp);
+
+            g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Puzzle.Unknown));
+
+            return bmp;
+        }
+
+        private void drawNumbers(int squareSize, Graphics g) {
+            int yExtra = (squareSize - TextRenderer.MeasureText("1", this.numberFont).Height) / 2 + 1;
+            for (int y = 0; y < this.puzzle.Height; y++) {
+                string nrs = this.puzzle.GetRowNumbers(y);
+                int nrsWidth = TextRenderer.MeasureText(nrs, this.numberFont).Width;
+                g.DrawString(nrs, this.numberFont, Brushes.Black, this.InnerOffset.X - nrsWidth - 4, this.InnerOffset.Y + y * squareSize + yExtra);
+            }
+            for (int x = 0; x < this.puzzle.Width; x++) {
+                string nrs = this.puzzle.GetColNumbers(x);
+                Size nrsSize = TextRenderer.MeasureText(nrs, this.numberFont);
+                g.DrawString(nrs, this.numberFont, Brushes.Black, this.InnerOffset.X + x * squareSize + (squareSize - nrsSize.Width) / 2, this.InnerOffset.Y - nrsSize.Height - 4);
+            }
         }
 
         private void drawSquares(int squareSize, bool fillSquares, bool darkerBackground, Graphics g) {
@@ -75,23 +150,6 @@ namespace Picross
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
-            }
-        }
-
-        private void changeInnerOffsetAndDrawNumbers(int squareSize, Graphics g) {
-            Font f = new Font("Arial", 12);
-            int yExtra = (squareSize - (int)g.MeasureString("1", f).Height) / 2 + 1;
-            for (int y = 0; y < this.puzzle.Height; y++) {
-                string nrs = this.puzzle.GetRowNumbers(y);
-                g.DrawString(nrs, f, Brushes.Black, this.InnerOffset.X - g.MeasureString(nrs, f).Width - 4, this.InnerOffset.Y + y * squareSize + yExtra);
-                if (g.MeasureString(nrs, f).Width > this.InnerOffset.X)
-                    this.InnerOffset = new Point((int)g.MeasureString(nrs, f).Width + 4, this.InnerOffset.Y);
-            }
-            for (int x = 0; x < this.puzzle.Width; x++) {
-                string nrs = this.puzzle.GetColNumbers(x);
-                g.DrawString(nrs, f, Brushes.Black, this.InnerOffset.X + x * squareSize + (squareSize - (int)g.MeasureString(nrs, f).Width) / 2, this.InnerOffset.Y - g.MeasureString(nrs, f).Height);
-                if (g.MeasureString(nrs, f).Height > this.InnerOffset.Y)
-                    this.InnerOffset = new Point(this.InnerOffset.X, (int)g.MeasureString(nrs, f).Height + 1);
             }
         }
 
