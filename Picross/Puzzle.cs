@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Drawing;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 
 namespace Picross
 {
@@ -172,7 +173,13 @@ namespace Picross
             return this.IsInRange(p.X, p.Y);
         }
         public bool IsInRange(int x, int y) {
-            return 0 <= x && x < this.Width && 0 <= y && y < this.Height;
+            return this.IsInRangeX(x) && this.IsInRangeY(y);
+        }
+        public bool IsInRangeX(int x) {
+            return 0 <= x && x < this.Width;
+        }
+        public bool IsInRangeY(int y) {
+            return 0 <= y && y < this.Width;
         }
 
         public int MouseMoved(Point lastMouse, Point nextMouse) {
@@ -206,11 +213,11 @@ namespace Picross
         }
 
         public string GetRowNumbers(int y) {
-            List<int> nrs = this.getRowNumberList(y);
+            List<int> nrs = this.GetRowNumberList(y);
             return string.Join<int>(" ", nrs);
         }
         public string GetColNumbers(int x) {
-            List<int> nrs = this.getColNumberList(x);
+            List<int> nrs = this.GetColNumberList(x);
             return string.Join<int>("\n", nrs);
         }
 
@@ -224,7 +231,7 @@ namespace Picross
             }
         }
 
-        private List<int> getRowNumberList(int y) {
+        public List<int> GetRowNumberList(int y) {
             // Initialize
             List<int> nrs = new List<int>();
             int counter = 0;
@@ -252,7 +259,7 @@ namespace Picross
             }
             return nrs;
         }
-        private List<int> getColNumberList(int x) {
+        public List<int> GetColNumberList(int x) {
             // Initialize
             List<int> nrs = new List<int>();
             int counter = 0;
@@ -318,19 +325,13 @@ namespace Picross
             List<int>[] cols = new List<int>[this.Width];
             List<int>[] rows = new List<int>[this.Height];
             for (int x = 0; x < this.Width; x++)
-                cols[x] = this.getColNumberList(x);
+                cols[x] = this.GetColNumberList(x);
             for (int y = 0; y < this.Height; y++)
-                rows[y] = this.getRowNumberList(y);
+                rows[y] = this.GetRowNumberList(y);
             int[,] pzl = new int[this.Width, this.Height];
 
             // Check if the original puzzle is not empty (one accidentally started designing in play mode)
-            bool originalIsEmpty = true;
-            for (int y = 0; y < this.Height; y++)
-                if (rows[y].Count > 0) {
-                    originalIsEmpty = false;
-                    break;
-                }
-            if (originalIsEmpty)
+            if (rows.All(r => r.Count == 0))
                 return true;
 
             // Start backtracking
