@@ -148,6 +148,8 @@ namespace Picross
                                 // Write to the just created file
                                 writer.WriteLine(this.puzzle.ToString());
                             }
+
+                            this.updateTitleBar(dialog.FileName);
                         }
                         this.fileName = Path.GetFileName(dialog.FileName);
                     }
@@ -294,6 +296,8 @@ namespace Picross
                     this.setNewPuzzleObject(Puzzle.FromString(reader.ReadToEnd()));
                     this.puzzle.EditorMode = Settings.Get.EditorMode;
                     this.OnResize();
+
+                    this.updateTitleBar(filename);
                     return true;
                 }
             }
@@ -352,6 +356,13 @@ namespace Picross
 
         private int moved(Point newMouse) {
             return this.puzzle.MouseMoved(this.mouse, newMouse);
+        }
+
+        private void updateTitleBar(string fullFileName = null) {
+            if (string.IsNullOrEmpty(fullFileName))
+                ((Main)this.Parent).Text = "Picross";
+            else
+                ((Main)this.Parent).Text = "Picross - " + Path.GetFileName(fullFileName);
         }
     }
 }
