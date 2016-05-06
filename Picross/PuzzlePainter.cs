@@ -82,7 +82,7 @@ namespace Picross
 
             // Update InnerOffset width
             for (int y = 0; y < this.puzzle.Height; y++) {
-                string nrs = this.puzzle.GetRowNumbers(y);
+                string nrs = this.puzzleForNumbers.GetRowNumbers(y);
                 int nrsWidth = TextRenderer.MeasureText(nrs, this.numberFont).Width;
                 if (nrsWidth > this.InnerOffset.X) {
                     this.InnerOffset = new Point(nrsWidth + 6, this.InnerOffset.Y);
@@ -91,7 +91,7 @@ namespace Picross
             }
             // Update InnerOffset height
             for (int x = 0; x < this.puzzle.Width; x++) {
-                string nrs = this.puzzle.GetColNumbers(x);
+                string nrs = this.puzzleForNumbers.GetColNumbers(x);
                 int nrsHeight = TextRenderer.MeasureText(nrs, this.numberFont).Height;
                 if (nrsHeight > this.InnerOffset.Y) {
                     this.InnerOffset = new Point(this.InnerOffset.X, nrsHeight + 8);
