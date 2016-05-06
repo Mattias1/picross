@@ -7,6 +7,7 @@ namespace Picross
     class PuzzlePainter
     {
         private Puzzle puzzle;
+        private Puzzle puzzleForNumbers;
         private Color[] colors; // Array is 0 based, so const values + 2.
         private Font numberFont;
 
@@ -26,8 +27,8 @@ namespace Picross
             }
         }
 
-        public PuzzlePainter(Puzzle puzzle) {
-            this.puzzle = puzzle;
+        public PuzzlePainter(Puzzle puzzle, Puzzle backupPuzzle) {
+            this.SetPuzzleObjects(puzzle, backupPuzzle);
             this.numberFont = new Font("Arial", 12);
 
             this.Offset = new Point(10, 10);
@@ -38,6 +39,11 @@ namespace Picross
             this.colors = new Color[5] {
                 s.GetColor(Puzzle.Decoration), s.GetColor(Puzzle.Empty), s.GetColor(Puzzle.Unknown), s.GetColor(Puzzle.Black), s.GetColor(Puzzle.Red)
             };
+        }
+
+        public void SetPuzzleObjects(Puzzle puzzle, Puzzle backupPuzzle) {
+            this.puzzle = puzzle;
+            this.puzzleForNumbers = backupPuzzle ?? puzzle;
         }
 
         public Color GetColor(int type) {
@@ -126,12 +132,12 @@ namespace Picross
         private void drawNumbers(int squareSize, Graphics g) {
             int yExtra = (squareSize - TextRenderer.MeasureText("1", this.numberFont).Height) / 2 + 1;
             for (int y = 0; y < this.puzzle.Height; y++) {
-                string nrs = this.puzzle.GetRowNumbers(y);
+                string nrs = this.puzzleForNumbers.GetRowNumbers(y);
                 int nrsWidth = TextRenderer.MeasureText(nrs, this.numberFont).Width;
                 g.DrawString(nrs, this.numberFont, Brushes.Black, this.InnerOffset.X - nrsWidth - 4, this.InnerOffset.Y + y * squareSize + yExtra);
             }
             for (int x = 0; x < this.puzzle.Width; x++) {
-                string nrs = this.puzzle.GetColNumbers(x);
+                string nrs = this.puzzleForNumbers.GetColNumbers(x);
                 Size nrsSize = TextRenderer.MeasureText(nrs, this.numberFont);
                 g.DrawString(nrs, this.numberFont, Brushes.Black, this.InnerOffset.X + x * squareSize + (squareSize - nrsSize.Width) / 2, this.InnerOffset.Y - nrsSize.Height - 4);
             }
@@ -146,10 +152,18 @@ namespace Picross
         }
 
         private void drawHover(int squareSize, Point mouse, int selectedColour, Graphics g) {
-            Point hover = this.puzzle.Mouse2Point(mouse, squareSize);
+            Point hover = PuzzleBoard.Mouse2Point(mouse, squareSize, this);
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
+            }
+            else {
+                if (this.puzzle.IsInRangeX(hover.X)) {
+                    
+                }
+                else if (this.puzzle.IsInRangeY(hover.Y)) {
+                    
+                }
             }
         }
 

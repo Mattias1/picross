@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace Picross
@@ -15,7 +14,7 @@ namespace Picross
         }
         public string Description { get; private set; }
 
-        public SizeDialog(string description, int defaultX = 20, int defaultY = 15, string labelDescription = "Size:") {
+        public SizeDialog(string description, Point? defaultSize = null, string labelDescription = "Size:") {
             // Some settings
             this.Description = description;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -26,7 +25,7 @@ namespace Picross
             this.Text = "Puzzle size";
 
             // Add the controls
-            this.addControls(defaultX, defaultY);
+            this.addControls(defaultSize ?? new Point(20, 15));
             this.AcceptButton = this.btnOk;
             this.CancelButton = this.btnCancel;
 
@@ -40,17 +39,17 @@ namespace Picross
             this.btnOk.LocateFrom(this.btnCancel, Btn.Horizontal.Left, Btn.Vertical.CopyBottom);
         }
 
-        private void addControls(int defaultX, int defaultY) {
+        private void addControls(Point defaultSize) {
             // The description label
             this.lblDescription = new Lbl(this.Description, this);
             this.lblDescription.Size = new Size(this.Width - 20, this.lblDescription.Height + 1);
 
             // The size textboxes
             this.tbWidth = new Tb(this);
-            this.tbWidth.Text = defaultX.ToString();
+            this.tbWidth.Text = defaultSize.X.ToString();
             this.tbWidth.Size = new Size(this.tbWidth.Width / 2, this.tbWidth.Height);
             this.tbHeight = new Tb(this);
-            this.tbHeight.Text = defaultY.ToString();
+            this.tbHeight.Text = defaultSize.Y.ToString();
             this.tbHeight.Size = this.tbWidth.Size;
 
             // The Ok and Cancel buttons
