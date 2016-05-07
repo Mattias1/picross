@@ -226,12 +226,15 @@ namespace Picross
         }
 
         private bool checkXYSoFar(Puzzle pzl, List<int>[] rows, List<int>[] cols, int x, int y) {
-            // Vertical
+            return checkHorizontalSoFar(pzl, rows[y], x, y) && checkVerticalSoFar(pzl, cols[x], x, y);
+        }
+        private bool checkHorizontalSoFar(Puzzle pzl, List<int> row, int x, int y) {
+            // Horizontal
             int counter = 0;
             int listCounter = 0;
             int sum = -1;
-            for (int i = 0; i <= y; i++) {
-                switch (pzl[x, i]) {
+            for (int i = 0; i <= x; i++) {
+                switch (pzl[i, y]) {
                 case Puzzle.Black:
                     // Count Black pixels
                     counter++;
@@ -241,7 +244,7 @@ namespace Picross
                 default:
                     // Check off the black pixels we've had so far
                     if (counter != 0) {
-                        if (cols[x][listCounter] != counter)
+                        if (row[listCounter] != counter)
                             return false;
                         listCounter++;
                         counter = 0;
@@ -250,24 +253,26 @@ namespace Picross
                 }
             }
             if (counter != 0) {
-                if (listCounter >= cols[x].Count)
+                if (listCounter >= row.Count)
                     return false;
-                if (cols[x][listCounter] < counter)
+                if (row[listCounter] < counter)
                     return false;
                 sum -= counter;
             }
             // Check if we have enough left to harbor the next pixels
-            for (int i = listCounter; i < cols[x].Count; i++)
-                sum += cols[x][i] + 1;
-            if (sum >= this.puzzle.Height - y)
+            for (int i = listCounter; i < row.Count; i++)
+                sum += row[i] + 1;
+            if (sum >= this.puzzle.Width - x)
                 return false;
-
-            // Horizontal
-            counter = 0;
-            listCounter = 0;
-            sum = -1;
-            for (int i = 0; i <= x; i++) {
-                switch (pzl[i, y]) {
+            return true;
+        }
+        private bool checkVerticalSoFar(Puzzle pzl, List<int> col, int x, int y) {
+            // Vertical
+            int counter = 0;
+            int listCounter = 0;
+            int sum = -1;
+            for (int i = 0; i <= y; i++) {
+                switch (pzl[x, i]) {
                 case Puzzle.Black:
                     // Count Black pixels
                     counter++;
@@ -286,16 +291,16 @@ namespace Picross
                 }
             }
             if (counter != 0) {
-                if (listCounter >= rows[y].Count)
+                if (listCounter >= col.Count)
                     return false;
-                if (rows[y][listCounter] < counter)
+                if (col[listCounter] < counter)
                     return false;
                 sum -= counter;
             }
             // Check if we have enough left to harbor the next pixels
-            for (int i = listCounter; i < rows[y].Count; i++)
-                sum += rows[y][i] + 1;
-            if (sum >= this.puzzle.Width - x)
+            for (int i = listCounter; i < col.Count; i++)
+                sum += col[i] + 1;
+            if (sum >= this.puzzle.Height - y)
                 return false;
             return true;
         }
