@@ -127,12 +127,12 @@ namespace Picross
         }
 
         public void ComputeRowAndColNumbers(out List<int>[] rows, out List<int>[] cols) {
-            cols = new List<int>[this.Width];
             rows = new List<int>[this.Height];
-            for (int x = 0; x < this.Width; x++)
-                cols[x] = this.GetColNumberList(x);
+            cols = new List<int>[this.Width];
             for (int y = 0; y < this.Height; y++)
                 rows[y] = this.GetRowNumberList(y);
+            for (int x = 0; x < this.Width; x++)
+                cols[x] = this.GetColNumberList(x);
         }
 
         public string GetRowNumbers(int y) {
