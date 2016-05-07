@@ -212,11 +212,10 @@ namespace Picross
                 if (backTracking(pzl, rows, cols, nextX(x), nextY(x, y), ref uniqueness))
                     return true;
 
-            // None of the values worked, so erase this one and start backtracking (unless you are back at the root and have a unique solution).
-            // pzl[x, y] = Unknown;
+            // None of the values worked, so start backtracking (unless you are back at the root and have a unique solution).
             if (x == 0 && y == 0)
                 return uniqueness == 1;
-            return x == 0 && y == 0 && uniqueness == 1;
+            return false;
         }
 
         private int nextX(int x) {
