@@ -123,7 +123,7 @@ namespace Picross
             return 0 <= x && x < this.Width;
         }
         public bool IsInRangeY(int y) {
-            return 0 <= y && y < this.Width;
+            return 0 <= y && y < this.Height;
         }
 
         public void ComputeRowAndColNumbers(out List<int>[] rows, out List<int>[] cols) {
