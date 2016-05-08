@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="Puzzle.cs" />
     <Compile Include="PuzzlePainter.cs" />
+    <Compile Include="Solver.cs" />
     <Compile Include="SizeDialog.cs">
       <SubType>Form</SubType>
     </Compile>
