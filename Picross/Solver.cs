@@ -5,12 +5,12 @@ namespace Picross
 {
     class Solver
     {
-        protected Puzzle puzzle;
-        protected readonly List<int>[] rows, cols;
+        protected Puzzle Puzzle;
+        protected readonly List<int>[] Rows, Cols;
 
         protected Solver(Puzzle puzzle, Puzzle puzzleForNumbers) {
-            this.puzzle = puzzle;
-            puzzleForNumbers.ComputeRowAndColNumbers(out this.rows, out this.cols);
+            this.Puzzle = puzzle;
+            puzzleForNumbers.ComputeRowAndColNumbers(out this.Rows, out this.Cols);
         }
 
         public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
@@ -31,7 +31,7 @@ namespace Picross
             // Termination criterium
             if (uniqueness > 1)
                 return false;
-            if (y == this.puzzle.Height || y == -1) {
+            if (y == this.Puzzle.Height || y == -1) {
                 if (uniqueness == -1)   // Don't check on uniqeness, so we can return.
                     return true;
                 uniqueness++;
@@ -39,12 +39,12 @@ namespace Picross
             }
 
             // Try all values
-            this.puzzle[x, y] = Puzzle.Black;
-            if (checkXYSoFar(x, y))
+            this.Puzzle[x, y] = Puzzle.Black;
+            if (CheckXYSoFar(x, y))
                 if (backTracking(nextX(x), nextY(x, y), ref uniqueness))
                     return true;
-            this.puzzle[x, y] = Puzzle.Empty;
-            if (checkXYSoFar(x, y))
+            this.Puzzle[x, y] = Puzzle.Empty;
+            if (CheckXYSoFar(x, y))
                 if (backTracking(nextX(x), nextY(x, y), ref uniqueness))
                     return true;
 
@@ -55,22 +55,22 @@ namespace Picross
         }
 
         private int nextX(int x) {
-            return ++x == this.puzzle.Width ? 0 : x;
+            return ++x == this.Puzzle.Width ? 0 : x;
         }
         private int nextY(int x, int y) {
-            return x == this.puzzle.Width - 1 ? y + 1 : y;
+            return x == this.Puzzle.Width - 1 ? y + 1 : y;
         }
 
-        protected bool checkXYSoFar(int x, int y) {
-            return checkHorizontalSoFar(x, y) && checkVerticalSoFar(x, y);
+        protected bool CheckXYSoFar(int x, int y) {
+            return CheckHorizontalSoFar(x, y) && CheckVerticalSoFar(x, y);
         }
-        protected bool checkHorizontalSoFar(int x, int y) {
-            List<int> row = this.rows[y];
+        protected bool CheckHorizontalSoFar(int x, int y) {
+            List<int> row = this.Rows[y];
             int counter = 0;
             int listCounter = 0;
             int sum = -1;
             for (int i = 0; i <= x; i++) {
-                switch (this.puzzle[i, y]) {
+                switch (this.Puzzle[i, y]) {
                 case Puzzle.Black:
                     // Count Black pixels
                     counter++;
@@ -98,17 +98,17 @@ namespace Picross
             // Check if we have enough left to harbor the next pixels
             for (int i = listCounter; i < row.Count; i++)
                 sum += row[i] + 1;
-            if (sum >= this.puzzle.Width - x)
+            if (sum >= this.Puzzle.Width - x)
                 return false;
             return true;
         }
-        protected bool checkVerticalSoFar(int x, int y) {
-            List<int> col = this.cols[x];
+        protected bool CheckVerticalSoFar(int x, int y) {
+            List<int> col = this.Cols[x];
             int counter = 0;
             int listCounter = 0;
             int sum = -1;
             for (int i = 0; i <= y; i++) {
-                switch (this.puzzle[x, i]) {
+                switch (this.Puzzle[x, i]) {
                 case Puzzle.Black:
                     // Count Black pixels
                     counter++;
@@ -136,7 +136,7 @@ namespace Picross
             // Check if we have enough left to harbor the next pixels
             for (int i = listCounter; i < col.Count; i++)
                 sum += col[i] + 1;
-            if (sum >= this.puzzle.Height - y)
+            if (sum >= this.Puzzle.Height - y)
                 return false;
             return true;
         }

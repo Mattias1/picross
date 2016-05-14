@@ -153,16 +153,29 @@ namespace Picross
 
         private void drawHover(int squareSize, Point mouse, int selectedColour, Graphics g) {
             Point hover = PuzzleBoard.Mouse2Point(mouse, squareSize, this);
+
+            // Draw a normal square hover
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
             }
-            else {
-                if (this.puzzle.IsInRangeX(hover.X)) {
-                    
+
+            // Draw the autoblank hovers
+            else if (this.puzzle != this.puzzleForNumbers) {
+                Color hoverColor = GameMath.Lerp(this.GetColor(Puzzle.Empty), Color.White, 0.5f);
+
+                if (this.puzzle.IsInRangeX(hover.X)) { // But y is not in range
+                    bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
+                    for (int y = 0; y < autoblanks.Length; y++)
+                        if (autoblanks[y])
+                            g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
                 }
-                else if (this.puzzle.IsInRangeY(hover.Y)) {
-                    
+
+                else if (this.puzzle.IsInRangeY(hover.Y)) { // But x is not in range
+                    bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
+                    for (int x = 0; x < autoblanks.Length; x++)
+                        if (autoblanks[x])
+                            g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
                 }
             }
         }
