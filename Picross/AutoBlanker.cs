@@ -9,13 +9,14 @@ namespace Picross
             : base(puzzle, puzzleForNumbers) { }
 
         public static bool[] GetRow(Puzzle puzzle, Puzzle puzzleForNumbers, int y) {
+            AutoBlanker solver = new AutoBlanker(null, puzzleForNumbers);
             bool[] result = new bool[puzzle.Width];
 
             // This has some performance problems, you are (have the risk of) bruteforcing all solutions #width times, rather than once.
             // (Every time it tries to find a configuration for the same row remember).
             for (int x = 0; x < puzzle.Width; x++) {
                 if (puzzle[x, y] == Puzzle.Unknown) {
-                    AutoBlanker solver = new AutoBlanker(puzzle.Clone(), puzzleForNumbers);
+                    solver.Puzzle = puzzle.Clone();
 
                     solver.Puzzle[x, y] = Puzzle.Black;
                     if (!solver.canFindValidRowConfiguration(0, y))
@@ -27,13 +28,14 @@ namespace Picross
         }
 
         public static bool[] GetCol(Puzzle puzzle, Puzzle puzzleForNumbers, int x) {
+            AutoBlanker solver = new AutoBlanker(null, puzzleForNumbers);
             bool[] result = new bool[puzzle.Height];
 
             // This has some performance problems, you are (have the risk of) bruteforcing all solutions #height times, rather than once.
             // (Every time it tries to find a configuration for the same column remember).
             for (int y = 0; y < puzzle.Height; y++) {
                 if (puzzle[x, y] == Puzzle.Unknown) {
-                    AutoBlanker solver = new AutoBlanker(puzzle.Clone(), puzzleForNumbers);
+                    solver.Puzzle = puzzle.Clone();
 
                     solver.Puzzle[x, y] = Puzzle.Black;
                     if (!solver.canFindValidColConfiguration(x, 0))
@@ -48,7 +50,7 @@ namespace Picross
             // Can I find a valid configuration of the cells for row y (using backtracking on x)
             // Termination criterium
             if (x >= this.Puzzle.Width)
-                return CheckVerticalSoFar(this.Puzzle.Width - 1, y);
+                return CheckHorizontalSoFar(this.Puzzle.Width - 1, y);
 
             // Not allowed to modify this value
             if (this.Puzzle[x, y] != Puzzle.Unknown)
@@ -56,16 +58,17 @@ namespace Picross
 
             // Try all values
             this.Puzzle[x, y] = Puzzle.Black;
-            if (CheckVerticalSoFar(x, y))
+            if (CheckHorizontalSoFar(x, y))
                 if (canFindValidRowConfiguration(x + 1, y))
                     return true;
 
             this.Puzzle[x, y] = Puzzle.Empty;
-            if (CheckVerticalSoFar(x, y))
+            if (CheckHorizontalSoFar(x, y))
                 if (canFindValidRowConfiguration(x + 1, y))
                     return true;
 
             // None of the values worked, so start backtracking
+            this.Puzzle[x,y] = Puzzle.Unknown;
             return false;
         }
 
@@ -91,6 +94,7 @@ namespace Picross
                     return true;
 
             // None of the values worked, so start backtracking
+            this.Puzzle[x, y] = Puzzle.Unknown;
             return false;
         }
     }

@@ -63,7 +63,9 @@ namespace Picross
             // Draw it to a bitmap
             int squareSize;
             adjustToNumberSizes(out squareSize);
-            Bitmap bmp = this.drawToBitmap(squareSize, mouse, selectedColour, true, Settings.Get.DarkerBackground);
+
+            Point hover = PuzzleBoard.Mouse2Point(mouse, squareSize, this);
+            Bitmap bmp = this.drawToBitmap(squareSize, hover, selectedColour, true, Settings.Get.DarkerBackground);
 
             // Draw that bitmap to form
             graphics.DrawImage(bmp, this.Offset);
@@ -107,13 +109,15 @@ namespace Picross
             return needsResizing;
         }
 
-        private Bitmap drawToBitmap(int squareSize, Point mouse, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
+        private Bitmap drawToBitmap(int squareSize, Point hover, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
             Graphics g;
             Bitmap bmp = this.initBitmap(squareSize, darkerBackground, out g);
 
             this.drawNumbers(squareSize, g);
             this.drawSquares(squareSize, fillSquares, darkerBackground, g);
-            this.drawHover(squareSize, mouse, selectedColour, g);
+            this.drawHover(squareSize, hover, selectedColour, g);
+            if (this.puzzle != this.puzzleForNumbers)
+                this.drawAutoblanksHover(squareSize, hover, g);
             this.drawLines(squareSize, bmp, g);
             this.drawMinimap(fillSquares, g);
 
@@ -151,32 +155,30 @@ namespace Picross
             }
         }
 
-        private void drawHover(int squareSize, Point mouse, int selectedColour, Graphics g) {
-            Point hover = PuzzleBoard.Mouse2Point(mouse, squareSize, this);
-
-            // Draw a normal square hover
+        private void drawHover(int squareSize, Point hover, int selectedColour, Graphics g) {
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
             }
+        }
 
-            // Draw the autoblank hovers
-            else if (this.puzzle != this.puzzleForNumbers) {
-                Color hoverColor = GameMath.Lerp(this.GetColor(Puzzle.Empty), Color.White, 0.5f);
+        private void drawAutoblanksHover(int squareSize, Point hover, Graphics g) {
+            Color hoverColor = GameMath.Lerp(this.GetColor(Puzzle.Empty), Color.White, 0.5f);
+            bool xOk = this.puzzle.IsInRangeX(hover.X); 
+            bool yOk = this.puzzle.IsInRangeY(hover.Y); 
 
-                if (this.puzzle.IsInRangeX(hover.X)) { // But y is not in range
-                    bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
-                    for (int y = 0; y < autoblanks.Length; y++)
-                        if (autoblanks[y])
-                            g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
-                }
+            if (xOk && !yOk) {
+                bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
+                for (int y = 0; y < autoblanks.Length; y++)
+                    if (autoblanks[y])
+                        g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+            }
 
-                else if (this.puzzle.IsInRangeY(hover.Y)) { // But x is not in range
-                    bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
-                    for (int x = 0; x < autoblanks.Length; x++)
-                        if (autoblanks[x])
-                            g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
-                }
+            else if (!xOk && yOk) {
+                bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
+                for (int x = 0; x < autoblanks.Length; x++)
+                    if (autoblanks[x])
+                        g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
             }
         }
 
