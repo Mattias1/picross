@@ -125,6 +125,10 @@ namespace Picross
             this.puzzle.Move(move);
         }
 
+        public override string ToString() {
+            return (this.backUpOriginalPuzzle ?? this.puzzle).ToString();
+        }
+
         // Helper methods
         public Point Mouse2Point(Point mouse, int squareSize) {
             // Get the array index corresponding to the mouse coordinate
