@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
+﻿using System.Drawing;
 
 namespace Picross
 {
@@ -135,7 +132,13 @@ namespace Picross
         }
         public static Point Mouse2Point(Point mouse, int squareSize, PuzzlePainter painter) {
             // Get the array index corresponding to the mouse coordinate
-            return new Point((mouse.X - painter.Offset.X - painter.InnerOffset.X) / squareSize, (mouse.Y - painter.Offset.Y - painter.InnerOffset.Y) / squareSize);
+            int numeratorX = mouse.X - painter.Offset.X - painter.InnerOffset.X;
+            int numeratorY = mouse.Y - painter.Offset.Y - painter.InnerOffset.Y;
+            if (numeratorX < 0)
+                numeratorX -= squareSize;
+            if (numeratorY < 0)
+                numeratorY -= squareSize;
+            return new Point(numeratorX / squareSize, numeratorY / squareSize);
         }
 
         private void doMouseClick(Point p, int value) {
