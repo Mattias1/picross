@@ -142,12 +142,28 @@ namespace Picross
         }
 
         private void doMouseClick(Point p, int value) {
-            // Do a mouseclick at the puzzle coordinate system's p.
+            // Set the puzzle value at point p
             if (this.puzzle.IsInRange(p)) {
                 if (this.puzzle[p] == value)
                     this.puzzle[p] = Puzzle.Unknown;
                 else
                     this.puzzle[p] = value;
+            }
+
+            // Or autoblank all columns
+            else if (!this.EditorMode) {
+                if (this.puzzle.IsInRangeX(p.X)) {
+                    bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.backUpOriginalPuzzle, p.X);
+                    for (int y = 0; y < autoblanks.Length; y++)
+                        if (autoblanks[y])
+                            this.puzzle[p.X, y] = Puzzle.Empty;
+                }
+                else if (this.puzzle.IsInRangeY(p.Y)) {
+                    bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.backUpOriginalPuzzle, p.Y);
+                    for (int x = 0; x < autoblanks.Length; x++)
+                        if (autoblanks[x])
+                            this.puzzle[x, p.Y] = Puzzle.Empty;
+                }
             }
         }
 
