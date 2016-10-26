@@ -33,7 +33,7 @@ namespace Picross
 
             // The mouse events
             this.MouseClick += (o, e) => {
-                if (this.moved(e.Location) > 0)
+                if (this.moved(e.Location))
                     this.puzzleBoard.MouseClick(e.Location, this.mouseButton2Type(e.Button));
             };
             this.MouseDown += (o, e) => {
@@ -42,8 +42,7 @@ namespace Picross
             };
             this.MouseUp += (o, e) => { this.mouseDown = false; };
             this.MouseMove += (o, e) => {
-                int moveChange = this.moved(e.Location);
-                if (moveChange > 0) {
+                if (this.moved(e.Location)) {
                     if (this.mouseDown) {
                         // Draw single squares
                         this.puzzleBoard.MouseClick(this.mouse, e.Location, this.mouseButton2Type(e.Button));
@@ -54,141 +53,37 @@ namespace Picross
             };
         }
 
+        // -- Buttons --
         private void addControls() {
             // Switch editor and play mode
             this.btnEditorMode = new Btn(Settings.Get.EditorMode ? "Mode: editor" : "Mode: play", this);
-            this.btnEditorMode.Click += (o, e) => {
-                this.puzzleBoard.EditorMode = !this.puzzleBoard.EditorMode;
-                Settings.Get.EditorMode = this.puzzleBoard.EditorMode;
-                if (this.puzzleBoard.EditorMode) {
-                    this.btnEditorMode.Text = "Mode: editor";
-                    this.btnMove.Show();
-                    this.btnSize.Show();
-                    this.btnCheck.Hide();
-                    this.cbStrictChecking.Hide();
-                }
-                else {
-                    this.btnEditorMode.Text = "Mode: play";
-                    this.btnMove.Hide();
-                    this.btnSize.Hide();
-                    this.btnCheck.Show();
-                    this.cbStrictChecking.Show();
-                }
-                this.OnResize();
-            };
+            this.btnEditorMode.Click += this.editorModeClick;
 
             // Create a new puzzle
             this.btnNewPuzzle = new Btn("New puzzle", this);
-            this.btnNewPuzzle.Click += (o, e) => {
-                SizeDialog dialog = new SizeDialog("Create a new picross puzzle.");
-                if (dialog.ShowDialog() == DialogResult.OK) {
-                    this.puzzleBoard = new PuzzleBoard(dialog.ChosenSize.X, dialog.ChosenSize.Y, Settings.Get.EditorMode);
-                    this.OnResize();
-                }
-            };
+            this.btnNewPuzzle.Click += this.newPuzzleClick;
 
             // Load a puzzle
             this.btnLoad = new Btn("Load", this);
-            this.btnLoad.Click += (o, e) => {
-                // Create the open file dialog box
-                OpenFileDialog dialog = new OpenFileDialog();
-                dialog.Title = "Open puzzle";
-                dialog.FileName = this.fileName;
-                if (Directory.Exists(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles"))
-                    dialog.InitialDirectory = Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles";
-                else
-                    dialog.InitialDirectory = Application.StartupPath;
-                dialog.AddExtension = true;
-                dialog.DefaultExt = ".pzl";
-                dialog.Filter = "Picross puzzle|*.pzl|All files|*.*";
-                DialogResult dialogResult = dialog.ShowDialog();
-
-                // Check if the user clicked OK
-                if (dialogResult == DialogResult.OK) {
-                    this.LoadPuzzleFromFile(dialog.FileName);
-                    this.fileName = Path.GetFileName(dialog.FileName);
-                }
-            };
+            this.btnLoad.Click += this.loadClick;
 
             // Save a puzzle
             this.btnSave = new Btn("Save", this);
-            this.btnSave.Click += (o, e) => {
-                // Create the save file dialog box
-                SaveFileDialog dialog = new SaveFileDialog();
-                dialog.Title = "Save puzzle";
-                dialog.FileName = this.fileName;
-                if (!Directory.Exists(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles"))
-                    Directory.CreateDirectory(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles");
-                dialog.InitialDirectory = Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles";
-                dialog.DefaultExt = ".pzl";
-                dialog.Filter = "Picross puzzle|*.pzl|Portable Network Graphics|*.png|Joint Photographic Experts Group|*.jpg|All files|*.*";
-                DialogResult dialogResult = dialog.ShowDialog();
-
-                // Check if the user clicked OK
-                if (dialogResult == DialogResult.OK) {
-                    try {
-                        string ext = Path.GetExtension(dialog.FileName);
-                        if (ext.ToLower() == ".png" || ext.ToLower() == ".jpg") {
-                            // Export the puzzle as image
-                            Bitmap bmp = this.puzzleBoard.Painter.ToBitmap(false);
-                            Bitmap bmpSolution = this.puzzleBoard.Painter.ToBitmap(true);
-                            bmp.Save(dialog.FileName);
-                            bmpSolution.Save(Path.Combine(Path.GetDirectoryName(dialog.FileName), "Solution" + Path.GetFileName(dialog.FileName)));
-                        }
-                        else {
-                            // Export the puzzle as a javascript array (.pzl)
-                            using (StreamWriter writer = new StreamWriter(dialog.FileName)) {
-                                // Write to the just created file
-                                writer.WriteLine(this.puzzleBoard.ToString());
-                            }
-
-                            this.updateTitleBar(dialog.FileName);
-                        }
-                        this.fileName = Path.GetFileName(dialog.FileName);
-                    }
-                    catch {
-                        MessageBox.Show("There was an error saving the puzzle.", "Save", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            };
+            this.btnSave.Click += this.saveClick;
 
             // Solve the puzzle
             this.btnSolve = new Btn("Solve", this);
-            this.btnSolve.Click += (o, e) => {
-                this.Cursor = Cursors.WaitCursor;
-                if (!this.puzzleBoard.Solve(!this.puzzleBoard.EditorMode))
-                    MessageBox.Show("This puzzle has no unique solution.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                else if (this.puzzleBoard.EditorMode)
-                    MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                if (!this.puzzleBoard.EditorMode)
-                    this.Draw();
-                this.Cursor = Cursors.Default;
-            };
+            this.btnSolve.Click += this.solveClick;
 
             // Check if you have no mistakes so far
             this.btnCheck = new Btn("Check", this);
             if (this.puzzleBoard.EditorMode)
                 this.btnCheck.Hide();
-            this.btnCheck.Click += (o, e) => {
-                switch (this.puzzleBoard.Check(Settings.Get.StrictChecking)) {
-                case 0:
-                    MessageBox.Show("You have one or more mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    break;
-                case 1:
-                    MessageBox.Show("You have no mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    break;
-                case 2:
-                    MessageBox.Show("You have solved the puzzle.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    break;
-                }
-            };
+            this.btnCheck.Click += this.checkClick;
 
             // Clear
             this.btnClear = new Btn("Clear", this);
-            this.btnClear.Click += (o, e) => {
-                this.puzzleBoard.Clear();
-                this.Draw();
-            };
+            this.btnClear.Click += this.clearClick;
 
             // The colour buttons
             this.btnColorBlack = new Btn("", this);
@@ -204,26 +99,13 @@ namespace Picross
             this.btnMove = new Btn("Move", this);
             if (!this.puzzleBoard.EditorMode)
                 this.btnMove.Hide();
-            this.btnMove.Click += (o, e) => {
-                SizeDialog dialog = new SizeDialog("Move the puzzle" + Environment.NewLine + "(use negative values to move left or up)", Point.Empty, "Move:");
-                dialog.Text = "Move puzzle";
-                if (dialog.ShowDialog() == DialogResult.OK) {
-                    this.puzzleBoard.Move(dialog.ChosenSize);
-                    this.Draw();
-                }
-            };
+            this.btnMove.Click += this.moveClick;
 
             // The size button
             this.btnSize = new Btn("Change size", this);
             if (!this.puzzleBoard.EditorMode)
                 this.btnSize.Hide();
-            this.btnSize.Click += (o, e) => {
-                SizeDialog dialog = new SizeDialog("Change the size of this puzzle", this.puzzleBoard.PuzzleSize);
-                if (dialog.ShowDialog() == DialogResult.OK) {
-                    this.puzzleBoard.ChangeSize(dialog.ChosenSize);
-                    this.OnResize();
-                }
-            };
+            this.btnSize.Click += this.sizeClick;
 
             // The strictness checkbox
             this.cbStrictChecking = new Cb("Strict check", this);
@@ -241,6 +123,142 @@ namespace Picross
                 this.Draw();
             };
             this.cbDarkerBackground.Checked = Settings.Get.DarkerBackground;
+        }
+
+        private void editorModeClick(object o, EventArgs e) {
+            this.puzzleBoard.EditorMode = !this.puzzleBoard.EditorMode;
+            Settings.Get.EditorMode = this.puzzleBoard.EditorMode;
+            if (this.puzzleBoard.EditorMode) {
+                this.btnEditorMode.Text = "Mode: editor";
+                this.btnMove.Show();
+                this.btnSize.Show();
+                this.btnCheck.Hide();
+                this.cbStrictChecking.Hide();
+            }
+            else {
+                this.btnEditorMode.Text = "Mode: play";
+                this.btnMove.Hide();
+                this.btnSize.Hide();
+                this.btnCheck.Show();
+                this.cbStrictChecking.Show();
+            }
+            this.OnResize();
+        }
+
+        private void newPuzzleClick(object o, EventArgs e) {
+            SizeDialog dialog = new SizeDialog("Create a new picross puzzle.");
+            if (dialog.ShowDialog() == DialogResult.OK) {
+                this.puzzleBoard = new PuzzleBoard(dialog.ChosenSize.X, dialog.ChosenSize.Y, Settings.Get.EditorMode);
+                this.OnResize();
+            }
+        }
+
+        private void loadClick(object o, EventArgs e) {
+            // Create the open file dialog box
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Title = "Open puzzle";
+            dialog.FileName = this.fileName;
+            if (Directory.Exists(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles"))
+                dialog.InitialDirectory = Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles";
+            else
+                dialog.InitialDirectory = Application.StartupPath;
+            dialog.AddExtension = true;
+            dialog.DefaultExt = ".pzl";
+            dialog.Filter = "Picross puzzle|*.pzl|All files|*.*";
+            DialogResult dialogResult = dialog.ShowDialog();
+
+            // Check if the user clicked OK
+            if (dialogResult == DialogResult.OK) {
+                this.LoadPuzzleFromFile(dialog.FileName);
+                this.fileName = Path.GetFileName(dialog.FileName);
+            }
+        }
+
+        private void saveClick(object o, EventArgs e) {
+            // Create the save file dialog box
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Title = "Save puzzle";
+            dialog.FileName = this.fileName;
+            if (!Directory.Exists(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles"))
+                Directory.CreateDirectory(Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles");
+            dialog.InitialDirectory = Application.StartupPath + Path.DirectorySeparatorChar + "Puzzles";
+            dialog.DefaultExt = ".pzl";
+            dialog.Filter = "Picross puzzle|*.pzl|Portable Network Graphics|*.png|Joint Photographic Experts Group|*.jpg|All files|*.*";
+            DialogResult dialogResult = dialog.ShowDialog();
+
+            // Check if the user clicked OK
+            if (dialogResult == DialogResult.OK) {
+                try {
+                    string ext = Path.GetExtension(dialog.FileName);
+                    if (ext.ToLower() == ".png" || ext.ToLower() == ".jpg") {
+                        // Export the puzzle as image
+                        Bitmap bmp = this.puzzleBoard.Painter.ToBitmap(false);
+                        Bitmap bmpSolution = this.puzzleBoard.Painter.ToBitmap(true);
+                        bmp.Save(dialog.FileName);
+                        bmpSolution.Save(Path.Combine(Path.GetDirectoryName(dialog.FileName), "Solution" + Path.GetFileName(dialog.FileName)));
+                    }
+                    else {
+                        // Export the puzzle as a javascript array (.pzl)
+                        using (StreamWriter writer = new StreamWriter(dialog.FileName)) {
+                            // Write to the just created file
+                            writer.WriteLine(this.puzzleBoard.ToString());
+                        }
+
+                        this.updateTitleBar(dialog.FileName);
+                    }
+                    this.fileName = Path.GetFileName(dialog.FileName);
+                }
+                catch {
+                    MessageBox.Show("There was an error saving the puzzle.", "Save", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void sizeClick(object o, EventArgs e) {
+            SizeDialog dialog = new SizeDialog("Change the size of this puzzle", this.puzzleBoard.PuzzleSize);
+            if (dialog.ShowDialog() == DialogResult.OK) {
+                this.puzzleBoard.ChangeSize(dialog.ChosenSize);
+                this.OnResize();
+            }
+        }
+
+        private void moveClick(object o, EventArgs e) {
+            SizeDialog dialog = new SizeDialog("Move the puzzle" + Environment.NewLine + "(use negative values to move left or up)", Point.Empty, "Move:");
+            dialog.Text = "Move puzzle";
+            if (dialog.ShowDialog() == DialogResult.OK) {
+                this.puzzleBoard.Move(dialog.ChosenSize);
+                this.Draw();
+            }
+        }
+
+        private void checkClick(object o, EventArgs e) {
+            switch (this.puzzleBoard.Check(Settings.Get.StrictChecking)) {
+            case 0:
+                MessageBox.Show("You have one or more mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                break;
+            case 1:
+                MessageBox.Show("You have no mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+            case 2:
+                MessageBox.Show("You have solved the puzzle.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                break;
+            }
+        }
+
+        private void clearClick(object o, EventArgs e) {
+            this.puzzleBoard.Clear();
+            this.Draw();
+        }
+
+        private void solveClick(object o, EventArgs e) {
+            this.Cursor = Cursors.WaitCursor;
+            if (!this.puzzleBoard.Solve(!this.puzzleBoard.EditorMode))
+                MessageBox.Show("This puzzle has no unique solution.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            else if (this.puzzleBoard.EditorMode)
+                MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (!this.puzzleBoard.EditorMode)
+                this.Draw();
+            this.Cursor = Cursors.Default;
         }
 
         private void colorBtnMouseDown(object o, MouseEventArgs e) {
@@ -281,6 +299,7 @@ namespace Picross
             return true;
         }
 
+        // -- Public methods --
         public bool LoadPuzzleFromFile(string filename) {
             // Create the streamReader
             try {
@@ -304,7 +323,9 @@ namespace Picross
             // Draw the puzzle, and check if the innerOffset is changed
             int selectedColour = this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Black) ? Puzzle.Black : Puzzle.Red;
             Point innerOffset = this.puzzleBoard.Painter.InnerOffset;
+
             this.puzzleBoard.Painter.Draw(this.CreateGraphics(), this.mouse, selectedColour);
+
             if (innerOffset != this.puzzleBoard.Painter.InnerOffset)
                 this.OnResize();
         }
@@ -331,6 +352,7 @@ namespace Picross
             this.Invalidate();
         }
 
+        // -- Helpers --
         private int mouseButton2Type(MouseButtons buttons) {
             if (buttons == MouseButtons.Left) {
                 if (this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Black))
@@ -347,8 +369,8 @@ namespace Picross
             return Puzzle.Unknown;
         }
 
-        private int moved(Point newMouse) {
-            return this.puzzleBoard.MouseMoved(this.mouse, newMouse);
+        private bool moved(Point newMouse) {
+            return this.puzzleBoard.MouseMoved(this.mouse, newMouse) > 0;
         }
 
         private void updateTitleBar(string fullFileName = null) {
