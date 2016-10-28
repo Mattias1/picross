@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Windows.Forms;
+using MattyControls;
 
 namespace Picross
 {
@@ -30,13 +31,13 @@ namespace Picross
             this.CancelButton = this.btnCancel;
 
             // Locate the controls
-            this.lblDescription.LocateInside(this, Btn.Horizontal.Left, Btn.Vertical.Top);
-            this.tbWidth.LocateFrom(this.lblDescription, Btn.Horizontal.CopyLeft, Btn.Vertical.Bottom);
+            this.lblDescription.PositionTopLeftInside(this);
+            this.tbWidth.PositionBelow(this.lblDescription);
             this.tbWidth.AddLabel(labelDescription, 0, true, 50);
-            this.tbHeight.LocateFrom(this.tbWidth, Btn.Horizontal.Right);
+            this.tbHeight.PositionRightOf(tbWidth);
             this.tbHeight.AddLabel(",", 0, false, 10);
-            this.btnCancel.LocateInside(this, Btn.Horizontal.Right, Btn.Vertical.Bottom);
-            this.btnOk.LocateFrom(this.btnCancel, Btn.Horizontal.Left, Btn.Vertical.CopyBottom);
+            this.btnCancel.PositionBottomRightInside(this);
+            this.btnOk.PositionLeftOf(this.btnCancel);
         }
 
         private void addControls(Point defaultSize) {

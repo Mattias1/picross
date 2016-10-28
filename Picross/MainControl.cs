@@ -2,10 +2,11 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using MattyControls;
 
 namespace Picross
 {
-    class MainControl : SeaUserControl
+    class MainControl : MattyUserControl
     {
         PuzzleBoard puzzleBoard;
         Point mouse;
@@ -332,20 +333,20 @@ namespace Picross
 
         public override void OnResize() {
             // The button locations
-            this.btnEditorMode.LocateInside(this, Btn.Horizontal.Right, Btn.Vertical.Top, 20);
-            this.btnNewPuzzle.LocateFrom(this.btnEditorMode, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnLoad.LocateFrom(this.btnNewPuzzle, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnSave.LocateFrom(this.btnLoad, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnSolve.LocateFrom(this.btnSave, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnCheck.LocateFrom(this.btnSolve, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnMove.LocateFrom(this.btnSolve, Btn.Horizontal.CopyLeft, Btn.Vertical.Bottom);
-            this.btnSize.LocateFrom(this.btnMove, Btn.Horizontal.CopyLeft, Btn.Vertical.Bottom);
-            this.btnClear.LocateFrom(this.puzzleBoard.EditorMode ? this.btnSize : this.btnCheck, Btn.Horizontal.CopyRight, Btn.Vertical.Bottom);
-            this.btnColorBlack.LocateFrom(this.btnClear, Btn.Horizontal.CopyLeft, Btn.Vertical.Bottom);
-            this.btnColorEmpty.LocateFrom(this.btnColorBlack, Btn.Horizontal.Right, Btn.Vertical.CopyTop, 5);
+            this.btnEditorMode.PositionTopRightInside(this, 20);
+            this.btnNewPuzzle.PositionBelow(this.btnEditorMode);
+            this.btnLoad.PositionBelow(this.btnNewPuzzle);
+            this.btnSave.PositionBelow(this.btnLoad);
+            this.btnSolve.PositionBelow(this.btnSave);
+            this.btnCheck.PositionBelow(this.btnSolve);
+            this.btnMove.PositionBelow(this.btnSolve);
+            this.btnSize.PositionBelow(this.btnMove);
+            this.btnClear.PositionBelow(this.puzzleBoard.EditorMode ? this.btnSize : this.btnCheck);
+            this.btnColorBlack.PositionBelow(this.btnClear);
+            this.btnColorEmpty.PositionRightOf(this.btnColorBlack, 5);
 
-            this.cbDarkerBackground.LocateInside(this, Btn.Horizontal.Right, Btn.Vertical.Bottom, 10);
-            this.cbStrictChecking.LocateFrom(this.cbDarkerBackground, Btn.Horizontal.CopyLeft, Btn.Vertical.Top);
+            this.cbDarkerBackground.PositionBottomRightInside(this);
+            this.cbStrictChecking.PositionAbove(cbDarkerBackground);
 
             // The puzzle location and size
             this.puzzleBoard.Painter.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);
