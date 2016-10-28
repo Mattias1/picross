@@ -4,13 +4,17 @@ namespace Picross
 {
     class AutoBlanker : Solver
     {
-        // TODO: if the whole column is invalid already before we start, we probably don't want to show anything!
         private AutoBlanker(Puzzle puzzle, Puzzle puzzleForNumbers)
             : base(puzzle, puzzleForNumbers) { }
 
         public static bool[] GetRow(Puzzle puzzle, Puzzle puzzleForNumbers, int y) {
             AutoBlanker solver = new AutoBlanker(null, puzzleForNumbers);
             bool[] result = new bool[puzzle.Width];
+
+            // If the whole row is invalid already before we start, we don't show anything.
+            solver.Puzzle = puzzle.Clone();
+            if (!solver.canFindValidRowConfiguration(0, y))
+                return result;
 
             // This has some performance problems, you are (have the risk of) bruteforcing all solutions #width times, rather than once.
             // (Every time it tries to find a configuration for the same row remember).
@@ -30,6 +34,11 @@ namespace Picross
         public static bool[] GetCol(Puzzle puzzle, Puzzle puzzleForNumbers, int x) {
             AutoBlanker solver = new AutoBlanker(null, puzzleForNumbers);
             bool[] result = new bool[puzzle.Height];
+
+            // If the whole column is invalid already before we start, we don't show anything.
+            solver.Puzzle = puzzle.Clone();
+            if (!solver.canFindValidColConfiguration(x, 0))
+                return result;
 
             // This has some performance problems, you are (have the risk of) bruteforcing all solutions #height times, rather than once.
             // (Every time it tries to find a configuration for the same column remember).
@@ -68,7 +77,7 @@ namespace Picross
                     return true;
 
             // None of the values worked, so start backtracking
-            this.Puzzle[x,y] = Puzzle.Unknown;
+            this.Puzzle[x, y] = Puzzle.Unknown;
             return false;
         }
 
