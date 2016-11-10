@@ -62,7 +62,5 @@ namespace Picross
         public void SetColor(int type, Color color) {
             this.set("color" + type.ToString(), color);
         }
-
-        public Settings() : base() { }
     }
 }

@@ -31,13 +31,7 @@ namespace Picross
             this.CancelButton = this.btnCancel;
 
             // Locate the controls
-            this.lblDescription.PositionTopLeftInside(this);
-            this.tbWidth.PositionBelow(this.lblDescription);
-            this.tbWidth.AddLabel(labelDescription, 0, true, 50);
-            this.tbHeight.PositionRightOf(tbWidth);
-            this.tbHeight.AddLabel(",", 0, false, 10);
-            this.btnCancel.PositionBottomRightInside(this);
-            this.btnOk.PositionLeftOf(this.btnCancel);
+            this.positionControls(labelDescription);
         }
 
         private void addControls(Point defaultSize) {
@@ -69,6 +63,16 @@ namespace Picross
                 this.DialogResult = DialogResult.Cancel;
                 this.Close();
             };
+        }
+
+        private void positionControls(string labelDescription) {
+            this.lblDescription.PositionTopLeftInside(this);
+            this.tbWidth.PositionBelow(this.lblDescription);
+            this.tbWidth.AddLabel(labelDescription, true, 50, 0);
+            this.tbHeight.PositionRightOf(tbWidth);
+            this.tbHeight.AddLabel(",", false, 10, 0);
+            this.btnCancel.PositionBottomRightInside(this);
+            this.btnOk.PositionLeftOf(this.btnCancel);
         }
     }
 }

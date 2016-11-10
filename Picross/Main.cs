@@ -8,10 +8,10 @@ namespace Picross
     class Main : MattyForm
     {
         private static Size MinSize = new Size(665, 435);
+        private static Size StartSize = new Size(888, 600);
 
-        public Main() : base(MinSize, Settings.Get) {
+        public Main() : base(MinSize, StartSize, Settings.Get) {
             // Load and apply the settings
-            Settings s = Settings.Get;
             this.Icon = Properties.Resources.EyesHybrid;
             this.MaximizeBox = false;
 
