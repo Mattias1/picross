@@ -62,82 +62,57 @@ namespace Picross
         }
 
         protected bool CheckXYSoFar(int x, int y) {
+            // Check whether or not the puzzle up untill (x, y) is valid, and can be made valid for the fields after (x, y).
             return CheckHorizontalSoFar(x, y) && CheckVerticalSoFar(x, y);
         }
+
         protected bool CheckHorizontalSoFar(int x, int y) {
-            List<int> row = this.Rows[y];
-            int counter = 0;
-            int listCounter = 0;
-            int sum = -1;
-            for (int i = 0; i <= x; i++) {
-                switch (this.Puzzle[i, y]) {
-                case Puzzle.Black:
-                    // Count Black pixels
-                    counter++;
-                    break;
-                case Puzzle.Red:
-                    throw new NotImplementedException();
-                default:
-                    // Check off the black pixels we've had so far
-                    if (counter != 0) {
-                        if (listCounter >= row.Count || row[listCounter] != counter)
-                            return false;
-                        listCounter++;
-                        counter = 0;
-                    }
-                    break;
-                }
-            }
-            if (counter != 0) {
-                if (listCounter >= row.Count)
-                    return false;
-                if (row[listCounter] < counter)
-                    return false;
-                sum -= counter;
-            }
-            // Check if we have enough left to harbor the next pixels
-            for (int i = listCounter; i < row.Count; i++)
-                sum += row[i] + 1;
-            if (sum >= this.Puzzle.Width - x)
-                return false;
-            return true;
+            return CheckHorizontalSoFar_Mirror(x, y, this.Rows[y], false);
         }
         protected bool CheckVerticalSoFar(int x, int y) {
-            List<int> col = this.Cols[x];
-            int counter = 0;
-            int listCounter = 0;
-            int sum = -1;
-            for (int i = 0; i <= y; i++) {
-                switch (this.Puzzle[x, i]) {
+            return CheckHorizontalSoFar_Mirror(y, x, this.Cols[x], true);
+        }
+
+        protected bool CheckHorizontalSoFar_Mirror(int x, int y, List<int> row, bool mirror) {
+            int groupSize = 0; // The number of black boxes next to each other (so far)
+            int listIndex = 0; // The number of black-box-groups we have had so far
+
+            // Check if the completed groups (untill x) are valid
+            for (int i = 0; i <= x; i++) {
+                switch (this.Puzzle[i, y, mirror]) {
                 case Puzzle.Black:
-                    // Count Black pixels
-                    counter++;
-                    break;
                 case Puzzle.Red:
-                    throw new NotImplementedException();
+                    // Count Black pixels (Red pixels count as Black for now)
+                    groupSize++;
+                    break;
                 default:
                     // Check off the black pixels we've had so far
-                    if (counter != 0) {
-                        if (listCounter >= col.Count || col[listCounter] != counter)
+                    if (groupSize != 0) {
+                        if (listIndex >= row.Count || groupSize != row[listIndex])
                             return false;
-                        listCounter++;
-                        counter = 0;
+                        listIndex++;
+                        groupSize = 0;
                     }
                     break;
                 }
             }
-            if (counter != 0) {
-                if (listCounter >= col.Count)
+
+            // If there is an incomplete group left, check if it's (possible to make it) valid
+            if (groupSize != 0) {
+                if (listIndex >= row.Count || groupSize > row[listIndex])
                     return false;
-                if (col[listCounter] < counter)
-                    return false;
-                sum -= counter;
             }
+
             // Check if we have enough left to harbor the next pixels
-            for (int i = listCounter; i < col.Count; i++)
-                sum += col[i] + 1;
-            if (sum >= this.Puzzle.Height - y)
+            int boxesStillNecessary = -groupSize - 1;
+            for (int i = listIndex; i < row.Count; i++) {
+                boxesStillNecessary += row[i] + 1;
+            }
+
+            if (boxesStillNecessary >= this.Puzzle.GetWidth(mirror) - x) {
                 return false;
+            }
+
             return true;
         }
     }

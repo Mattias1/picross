@@ -14,17 +14,24 @@ namespace Picross
 
         private int[,] puzzle;
 
-        public int this[int x, int y] {
-            get { return this.puzzle[x, y]; }
-            set { this.puzzle[x, y] = value; }
+        public int this[int x, int y, bool mirror = false] {
+            get { return mirror ? this.puzzle[y, x] : this.puzzle[x, y]; }
+            set {
+                if (mirror)
+                    this.puzzle[y, x] = value;
+                else
+                    this.puzzle[x, y] = value;
+            }
         }
-        public int this[Point p] {
-            get { return this[p.X, p.Y]; }
-            set { this[p.X, p.Y] = value; }
+        public int this[Point p, bool mirror = false] {
+            get { return this[p.X, p.Y, mirror]; }
+            set { this[p.X, p.Y, mirror] = value; }
         }
 
         public int Width => this.puzzle.GetLength(0);
         public int Height => this.puzzle.GetLength(1);
+        public int GetWidth(bool mirror) => mirror ? this.Height : this.Width;
+        public int GetHeight(bool mirror) => GetWidth(!mirror);
 
         public Point Size => new Point(this.Width, this.Height);
 
