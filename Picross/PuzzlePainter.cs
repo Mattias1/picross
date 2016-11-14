@@ -6,6 +6,8 @@ namespace Picross
 {
     class PuzzlePainter
     {
+        private const int MINIMUM_SQUARE_SIZE = 5;
+
         private Puzzle puzzle;
         private Puzzle puzzleForNumbers;
         private Color[] colors; // Array is 0 based, so const values + 2.
@@ -22,7 +24,7 @@ namespace Picross
             set
             {
                 this.maxSize = value;
-                int squareSize = Math.Max(5, Math.Min((value.X - this.InnerOffset.X) / this.puzzle.Width, (value.Y - this.InnerOffset.Y) / this.puzzle.Height)); // Minimum square size is 5
+                int squareSize = Math.Max(MINIMUM_SQUARE_SIZE, Math.Min((value.X - this.InnerOffset.X) / this.puzzle.Width, (value.Y - this.InnerOffset.Y) / this.puzzle.Height));
                 this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width, this.InnerOffset.Y + squareSize * this.puzzle.Height);
             }
         }
@@ -51,9 +53,10 @@ namespace Picross
         }
         public bool SetColor(int type, Color color) {
             // Don't set a colour that is already used
-            for (int i = 0; i < this.colors.Length; i++)
+            for (int i = 0; i < this.colors.Length; i++) {
                 if (this.colors[i].R == color.R && this.colors[i].G == color.G && this.colors[i].B == color.B)
                     return false;
+            }
             // Set the colour
             this.colors[type + 2] = color;
             return true;
@@ -164,21 +167,23 @@ namespace Picross
 
         private void drawAutoblanksHover(int squareSize, Point hover, Graphics g) {
             Color hoverColor = GameMath.Lerp(this.GetColor(Puzzle.Empty), Color.White, 0.5f);
-            bool xOk = this.puzzle.IsInRangeX(hover.X); 
-            bool yOk = this.puzzle.IsInRangeY(hover.Y); 
+            bool xOk = this.puzzle.IsInRangeX(hover.X);
+            bool yOk = this.puzzle.IsInRangeY(hover.Y);
 
             if (xOk && !yOk) {
                 bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
-                for (int y = 0; y < autoblanks.Length; y++)
+                for (int y = 0; y < autoblanks.Length; y++) {
                     if (autoblanks[y])
                         g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+                }
             }
 
             else if (!xOk && yOk) {
                 bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
-                for (int x = 0; x < autoblanks.Length; x++)
+                for (int x = 0; x < autoblanks.Length; x++) {
                     if (autoblanks[x])
                         g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
+                }
             }
         }
 
@@ -205,10 +210,11 @@ namespace Picross
             if (fillSquares) {
                 int squareSize = 2;
                 Point offset = new Point((this.InnerOffset.X - squareSize * this.puzzle.Width) / 2, (this.InnerOffset.Y - squareSize * this.puzzle.Height) / 2);
-                for (int y = 0; y < this.puzzle.Height; y++)
+                for (int y = 0; y < this.puzzle.Height; y++) {
                     for (int x = 0; x < this.puzzle.Width; x++)
                         if (this.puzzle[x, y] == Puzzle.Black || this.puzzle[x, y] == Puzzle.Red)
                             g.FillRectangle(new SolidBrush(Color.Black), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
+                }
             }
         }
 
