@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoBlanker.cs" />
+    <Compile Include="Field.cs" />
     <Compile Include="GameMath.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>

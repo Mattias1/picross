@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace Picross
@@ -37,7 +38,7 @@ namespace Picross
 
             Settings s = Settings.Get;
             this.colors = new Color[5] {
-                s.GetColor(Puzzle.Decoration), s.GetColor(Puzzle.Empty), s.GetColor(Puzzle.Unknown), s.GetColor(Puzzle.Black), s.GetColor(Puzzle.Red)
+                s.GetColor(Field.Decoration), s.GetColor(Field.Empty), s.GetColor(Field.Unknown), s.GetColor(Field.Black), s.GetColor(Field.Red)
             };
         }
 
@@ -46,21 +47,34 @@ namespace Picross
             this.puzzleForNumbers = backupPuzzle ?? puzzle;
         }
 
-        public Color GetColor(int type) {
-            return this.colors[type + 2];
+        public Color GetColor(Field type) {
+            return this.colors[type.Index];
         }
-        public bool SetColor(int type, Color color) {
+        public bool SetColor(Field type, Color color) {
             // Don't set a colour that is already used
             for (int i = 0; i < this.colors.Length; i++) {
                 if (this.colors[i].R == color.R && this.colors[i].G == color.G && this.colors[i].B == color.B)
                     return false;
             }
             // Set the colour
-            this.colors[type + 2] = color;
+            this.colors[type.Index] = color;
             return true;
         }
 
-        public void Draw(Graphics graphics, Point mouse, int selectedColour = Puzzle.Black) {
+        public Field GetType(Color color) {
+            foreach (Field f in Field.All) {
+                Color c = this.colors[f.Index];
+                if (c.R == color.R && c.G == color.G && c.B == color.B)
+                    return f;
+            }
+
+            return Field.Unknown;
+        }
+
+        public void Draw(Graphics graphics, Point mouse) {
+            this.Draw(graphics, mouse, Field.Black);
+        }
+        public void Draw(Graphics graphics, Point mouse, Field selectedColour) {
             // Draw it to a bitmap
             int squareSize;
             adjustToNumberSizes(out squareSize);
@@ -73,7 +87,7 @@ namespace Picross
         }
 
         public Bitmap ToBitmap(bool solution) {
-            return this.drawToBitmap(32, new Point(-1, -1), Puzzle.Black, solution);
+            return this.drawToBitmap(32, new Point(-1, -1), Field.Black, solution);
         }
 
         public int CalculateSquareSize() {
@@ -110,7 +124,7 @@ namespace Picross
             return needsResizing;
         }
 
-        private Bitmap drawToBitmap(int squareSize, Point hover, int selectedColour, bool fillSquares = true, bool darkerBackground = false) {
+        private Bitmap drawToBitmap(int squareSize, Point hover, Field selectedColour, bool fillSquares = true, bool darkerBackground = false) {
             Graphics g;
             Bitmap bmp = this.initBitmap(squareSize, darkerBackground, out g);
 
@@ -129,7 +143,7 @@ namespace Picross
             Bitmap bmp = new Bitmap(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
             g = Graphics.FromImage(bmp);
 
-            g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Puzzle.Unknown));
+            g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Field.Unknown));
 
             return bmp;
         }
@@ -152,11 +166,11 @@ namespace Picross
             if (fillSquares) {
                 for (int y = 0; y < this.puzzle.Height; y++)
                     for (int x = 0; x < this.puzzle.Width; x++)
-                        g.FillRectangle(this.GetBrush(this.puzzle[x, y], darkerBackground), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+                        g.FillRectangle(this.getBrush(this.puzzle[x, y], darkerBackground), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
             }
         }
 
-        private void drawHover(int squareSize, Point hover, int selectedColour, Graphics g) {
+        private void drawHover(int squareSize, Point hover, Field selectedColour, Graphics g) {
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
@@ -164,7 +178,7 @@ namespace Picross
         }
 
         private void drawAutoblanksHover(int squareSize, Point hover, Graphics g) {
-            Color hoverColor = GameMath.Lerp(this.GetColor(Puzzle.Empty), Color.White, 0.5f);
+            Color hoverColor = GameMath.Lerp(this.GetColor(Field.Empty), Color.White, 0.5f);
             bool xOk = this.puzzle.IsInRangeX(hover.X);
             bool yOk = this.puzzle.IsInRangeY(hover.Y);
 
@@ -188,20 +202,20 @@ namespace Picross
         private void drawLines(int squareSize, Bitmap bmp, Graphics g) {
             // Draw the horizontal and vertical lines
             for (int y = 0; y < this.puzzle.Height + 1; y++)
-                g.DrawLine(this.GetPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
+                g.DrawLine(this.getPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
             for (int x = 0; x < this.puzzle.Width + 1; x++)
-                g.DrawLine(this.GetPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
+                g.DrawLine(this.getPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
 
             // Override grey lines
             for (int y = 0; y < this.puzzle.Height; y += 5)
-                g.DrawLine(this.GetPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
+                g.DrawLine(this.getPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
             for (int x = 0; x < this.puzzle.Width; x += 5)
-                g.DrawLine(this.GetPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
-            g.DrawLine(this.GetPen(this.puzzle.Height, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * this.puzzle.Height, bmp.Width - 1, this.InnerOffset.Y + squareSize * this.puzzle.Height);
+                g.DrawLine(this.getPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
+            g.DrawLine(this.getPen(this.puzzle.Height, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * this.puzzle.Height, bmp.Width - 1, this.InnerOffset.Y + squareSize * this.puzzle.Height);
 
             // Draw the lines to close the number boxes
-            g.DrawLine(this.GetPen(0, 0), 1, this.InnerOffset.Y, 1, bmp.Height - 1);
-            g.DrawLine(this.GetPen(0, 0), this.InnerOffset.X, 1, bmp.Width - 1, 1);
+            g.DrawLine(this.getPen(0, 0), 1, this.InnerOffset.Y, 1, bmp.Height - 1);
+            g.DrawLine(this.getPen(0, 0), this.InnerOffset.X, 1, bmp.Width - 1, 1);
         }
 
         private void drawMinimap(bool fillSquares, Graphics g) {
@@ -210,20 +224,20 @@ namespace Picross
                 Point offset = new Point((this.InnerOffset.X - squareSize * this.puzzle.Width) / 2, (this.InnerOffset.Y - squareSize * this.puzzle.Height) / 2);
                 for (int y = 0; y < this.puzzle.Height; y++) {
                     for (int x = 0; x < this.puzzle.Width; x++)
-                        if (this.puzzle[x, y] == Puzzle.Black || this.puzzle[x, y] == Puzzle.Red)
+                        if (this.puzzle[x, y] == Field.Black || this.puzzle[x, y] == Field.Red)
                             g.FillRectangle(new SolidBrush(Color.Black), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
                 }
             }
         }
 
-        private Brush GetBrush(int type, bool darkerBackground) {
+        private Brush getBrush(Field type, bool darkerBackground) {
             // Get the brush with the right colour (used for drawing squares)
-            if (darkerBackground && type == Puzzle.Unknown)
+            if (darkerBackground && type == Field.Unknown)
                 return Brushes.LightGray;
             return new SolidBrush(this.GetColor(type));
         }
 
-        private Pen GetPen(int i, int last) {
+        private Pen getPen(int i, int last) {
             // Get the pen with the right colour (used for drawing lines)
             if (i % 5 == 0 || i == last)
                 return new Pen(Color.Black, 2);

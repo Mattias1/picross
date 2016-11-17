@@ -38,11 +38,11 @@ namespace Picross
             }
 
             // Try all values
-            this.Puzzle[x, y] = Puzzle.Black;
+            this.Puzzle[x, y] = Field.Black;
             if (CheckXYSoFar(x, y))
                 if (backTracking(nextX(x), nextY(x, y), ref uniqueness))
                     return true;
-            this.Puzzle[x, y] = Puzzle.Empty;
+            this.Puzzle[x, y] = Field.Empty;
             if (CheckXYSoFar(x, y))
                 if (backTracking(nextX(x), nextY(x, y), ref uniqueness))
                     return true;
@@ -78,21 +78,16 @@ namespace Picross
 
             // Check if the completed groups (untill x) are valid
             for (int i = 0; i <= x; i++) {
-                switch (this.Puzzle[i, y, mirror]) {
-                case Puzzle.Black:
-                case Puzzle.Red:
-                    // Count Black pixels (Red pixels count as Black for now)
+                // Count Black pixels (Red pixels count as Black for now)
+                if (this.Puzzle[i, y, mirror].IsOn()) {
                     groupSize++;
-                    break;
-                default:
-                    // Check off the black pixels we've had so far
-                    if (groupSize != 0) {
-                        if (listIndex >= row.Count || groupSize != row[listIndex])
-                            return false;
-                        listIndex++;
-                        groupSize = 0;
-                    }
-                    break;
+                }
+                // Check off the black pixels we've had so far
+                else if (groupSize != 0) {
+                    if (listIndex >= row.Count || groupSize != row[listIndex])
+                        return false;
+                    listIndex++;
+                    groupSize = 0;
                 }
             }
 

@@ -4,6 +4,8 @@ namespace Picross
 {
     class PuzzleBoard
     {
+        public enum CheckResult { Mistake, AllRightSoFar, Finished };
+
         // Members
         private Puzzle puzzleObject;
         private Puzzle backUpOriginalPuzzle;
@@ -48,18 +50,18 @@ namespace Picross
 
         // Methods for communication with the outside world
         public PuzzleBoard(int w, int h, bool editormode)
-            : this(new Puzzle(w, h), editormode) { }
+                : this(new Puzzle(w, h), editormode) { }
         public PuzzleBoard(Puzzle puzzle, bool editormode) {
             this.puzzle = puzzle;         // Also sets the painter
             this.backUpOriginalPuzzle = null;
             this.EditorMode = editormode; // This may override the backup puzzle and will set the painter (again)
         }
 
-        public void MouseClick(Point mouse, int value) {
+        public void MouseClick(Point mouse, Field value) {
             Point p = this.Mouse2Point(mouse, this.painter.CalculateSquareSize());
             doMouseClick(p, value);
         }
-        public void MouseClick(Point oldMouse, Point newMouse, int value) {
+        public void MouseClick(Point oldMouse, Point newMouse, Field value) {
             Point from = this.Mouse2Point(oldMouse, this.painter.CalculateSquareSize());
             Point to = this.Mouse2Point(newMouse, this.painter.CalculateSquareSize());
             if (from.Y == to.Y) {
@@ -141,11 +143,11 @@ namespace Picross
             return new Point(numeratorX / squareSize, numeratorY / squareSize);
         }
 
-        private void doMouseClick(Point p, int value) {
+        private void doMouseClick(Point p, Field value) {
             // Set the puzzle value at point p
             if (this.puzzle.IsInRange(p)) {
                 if (this.puzzle[p] == value)
-                    this.puzzle[p] = Puzzle.Unknown;
+                    this.puzzle[p] = Field.Unknown;
                 else
                     this.puzzle[p] = value;
             }
@@ -156,34 +158,37 @@ namespace Picross
                     bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.backUpOriginalPuzzle, p.X);
                     for (int y = 0; y < autoblanks.Length; y++)
                         if (autoblanks[y])
-                            this.puzzle[p.X, y] = Puzzle.Empty;
+                            this.puzzle[p.X, y] = Field.Empty;
                 }
                 else if (this.puzzle.IsInRangeY(p.Y)) {
                     bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.backUpOriginalPuzzle, p.Y);
                     for (int x = 0; x < autoblanks.Length; x++)
                         if (autoblanks[x])
-                            this.puzzle[x, p.Y] = Puzzle.Empty;
+                            this.puzzle[x, p.Y] = Field.Empty;
                 }
             }
         }
 
         // Solve methods
-        public int Check(bool strict) {
-            // Return 0 if mistake found, 2 if puzzle is finished and 1 if no mistake found but not yet finished. 
+        public CheckResult Check(bool strict) {
             bool finished = true;
-            for (int y = 0; y < this.puzzle.Height; y++)
+            for (int y = 0; y < this.puzzle.Height; y++) {
                 for (int x = 0; x < this.puzzle.Width; x++) {
                     // Mistake
-                    if ((this.puzzle[x, y] > 0 && this.backUpOriginalPuzzle[x, y] <= 0))
-                        return 0;
+                    if ((this.puzzle[x, y].IsOn() && this.backUpOriginalPuzzle[x, y] != this.puzzle[x, y]))
+                        return CheckResult.Mistake;
+
                     // Strict mistake (filled in a blank spot while it should be filled).
-                    if (strict && this.puzzle[x, y] < 0 && this.backUpOriginalPuzzle[x, y] > 0)
-                        return 0;
+                    if (strict && this.puzzle[x, y].IsOff() && this.backUpOriginalPuzzle[x, y].IsOn())
+                        return CheckResult.Mistake;
+
                     // Not yet finished
-                    if (this.puzzle[x, y] <= 0 && this.backUpOriginalPuzzle[x, y] > 0)
+                    if (this.puzzle[x, y].IsNotOn() && this.backUpOriginalPuzzle[x, y].IsOn())
                         finished = false;
                 }
-            return finished ? 2 : 1;
+            }
+
+            return finished ? CheckResult.Finished : CheckResult.AllRightSoFar;
         }
 
         public bool Solve(bool setPuzzle) {

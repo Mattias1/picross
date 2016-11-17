@@ -1,29 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace Picross
 {
     class Puzzle
     {
-        // The types
-        public const int Decoration = -2;   // An empty square with a decoration colour
-        public const int Empty = -1;        // A square you are sure it's empty
-        public const int Unknown = 0;       // A square you don't know anything about
-        public const int Black = 1;         // A black square
-        public const int Red = 2;           // A red square
+        private Field[,] puzzle;
 
-        private int[,] puzzle;
-
-        public int this[int x, int y, bool mirror = false] {
+        public Field this[int x, int y, bool mirror = false]
+        {
             get { return mirror ? this.puzzle[y, x] : this.puzzle[x, y]; }
-            set {
+            set
+            {
                 if (mirror)
                     this.puzzle[y, x] = value;
                 else
                     this.puzzle[x, y] = value;
             }
         }
-        public int this[Point p, bool mirror = false] {
+        public Field this[Point p, bool mirror = false]
+        {
             get { return this[p.X, p.Y, mirror]; }
             set { this[p.X, p.Y, mirror] = value; }
         }
@@ -36,12 +33,12 @@ namespace Picross
         public Point Size => new Point(this.Width, this.Height);
 
         public Puzzle(int width, int height) {
-            this.puzzle = new int[width, height];
+            this.puzzle = new Field[width, height];
         }
 
         public Puzzle Clone() {
             var result = new Puzzle(this.Width, this.Height);
-            result.puzzle = (int[,])this.puzzle.Clone();
+            result.puzzle = (Field[,])this.puzzle.Clone();
             return result;
         }
 
@@ -84,9 +81,9 @@ namespace Picross
             int nrIndex = 0;
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++) {
-                    int nr = int.Parse(numbers[nrIndex++]);
-                    if (nr == Black || nr == Red)
-                        result.puzzle[x, y] = nr;
+                    Field field = Field.Parse(numbers[nrIndex++]);
+                    if (field == Field.Black || field == Field.Red)
+                        result.puzzle[x, y] = field;
                 }
             return result;
         }
@@ -94,28 +91,30 @@ namespace Picross
         public void Clear() {
             for (int y = 0; y < this.Height; y++)
                 for (int x = 0; x < this.Width; x++)
-                    this[x, y] = Unknown;
+                    this[x, y] = Field.Unknown;
         }
 
         public void Move(Point move) {
-            int[,] pzl = new int[this.Width, this.Height];
-            for (int y = 0; y < this.Height; y++)
+            Field[,] pzl = new Field[this.Width, this.Height];
+            for (int y = 0; y < this.Height; y++) {
                 for (int x = 0; x < this.Width; x++) {
                     Point to = new Point(x + move.X, y + move.Y);
                     if (IsInRange(to))
                         pzl[to.X, to.Y] = this[x, y];
                 }
+            }
 
             this.puzzle = pzl;
         }
 
         public void ChangeSize(Point size) {
-            int[,] pzl = new int[size.X, size.Y];
-            for (int y = 0; y < size.Y; y++)
+            Field[,] pzl = new Field[size.X, size.Y];
+            for (int y = 0; y < size.Y; y++) {
                 for (int x = 0; x < size.X; x++) {
                     if (IsInRange(x, y))
                         pzl[x, y] = this[x, y];
                 }
+            }
 
             this.puzzle = pzl;
         }
@@ -152,53 +151,25 @@ namespace Picross
         }
 
         public List<int> GetRowNumberList(int y) {
-            // Initialize
-            List<int> nrs = new List<int>();
-            int counter = 0;
-
-            // Count all numbers
-            for (int x = 0; x < this.Width; x++) {
-                switch (this.puzzle[x, y]) {
-                case Black:
-                    counter++;
-                    break;
-                case Red:
-                    counter++;
-                    break;
-                default:
-                    if (counter != 0) {
-                        nrs.Add(counter);
-                        counter = 0;
-                    }
-                    break;
-                }
-            }
-            if (counter != 0) {
-                nrs.Add(counter);
-                counter = 0;
-            }
-            return nrs;
+            return this.GetRowNumberList_Mirror(y, false);
         }
         public List<int> GetColNumberList(int x) {
+            return this.GetRowNumberList_Mirror(x, true);
+        }
+
+        private List<int> GetRowNumberList_Mirror(int y, bool mirror) {
             // Initialize
             List<int> nrs = new List<int>();
             int counter = 0;
 
             // Count all numbers
-            for (int y = 0; y < this.Height; y++) {
-                switch (this.puzzle[x, y]) {
-                case Black:
+            for (int x = 0; x < this.GetWidth(mirror); x++) {
+                if (this[x, y, mirror].IsOn()) {
                     counter++;
-                    break;
-                case Red:
-                    counter++;
-                    break;
-                default:
-                    if (counter != 0) {
-                        nrs.Add(counter);
-                        counter = 0;
-                    }
-                    break;
+                }
+                else if (counter != 0) {
+                    nrs.Add(counter);
+                    counter = 0;
                 }
             }
             if (counter != 0) {
@@ -210,10 +181,11 @@ namespace Picross
 
         public bool IsEmpty() {
             // Check if the array is an empty array
-            for (int y = 0; y < this.Height; y++)
+            for (int y = 0; y < this.Height; y++) {
                 for (int x = 0; x < this.Width; x++)
-                    if (this.puzzle[x, y] != Unknown)
+                    if (this.puzzle[x, y] != Field.Unknown)
                         return false;
+            }
             return true;
         }
     }

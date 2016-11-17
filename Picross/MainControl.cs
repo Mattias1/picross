@@ -88,11 +88,11 @@ namespace Picross
 
             // The colour buttons
             this.btnColorBlack = new Btn("", this);
-            this.btnColorBlack.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Black);
+            this.btnColorBlack.BackColor = this.puzzleBoard.Painter.GetColor(Field.Black);
             this.btnColorBlack.Size = new Size(this.btnColorBlack.Height, this.btnColorBlack.Height);
             this.btnColorBlack.MouseDown += this.colorBtnMouseDown;
             this.btnColorEmpty = new Btn("", this);
-            this.btnColorEmpty.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Empty);
+            this.btnColorEmpty.BackColor = this.puzzleBoard.Painter.GetColor(Field.Empty);
             this.btnColorEmpty.Size = this.btnColorBlack.Size;
             this.btnColorEmpty.MouseDown += this.colorBtnMouseDown;
 
@@ -234,13 +234,13 @@ namespace Picross
 
         private void checkClick(object o, EventArgs e) {
             switch (this.puzzleBoard.Check(Settings.Get.StrictChecking)) {
-            case 0:
+            case PuzzleBoard.CheckResult.Mistake:
                 MessageBox.Show("You have one or more mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 break;
-            case 1:
+            case PuzzleBoard.CheckResult.AllRightSoFar:
                 MessageBox.Show("You have no mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
-            case 2:
+            case PuzzleBoard.CheckResult.Finished:
                 MessageBox.Show("You have solved the puzzle.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
             }
@@ -265,22 +265,18 @@ namespace Picross
         private void colorBtnMouseDown(object o, MouseEventArgs e) {
             Btn btn = (Btn)o;
             if (e.Button == MouseButtons.Left) {
-                if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Black))
-                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Red);
-                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Red))
-                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Black);
-                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Empty))
-                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Decoration);
-                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Decoration))
-                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Puzzle.Empty);
+                if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black))
+                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Field.Red);
+                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Field.Red))
+                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Field.Black);
+                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Field.Empty))
+                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Field.Decoration);
+                else if (btn.BackColor == this.puzzleBoard.Painter.GetColor(Field.Decoration))
+                    btn.BackColor = this.puzzleBoard.Painter.GetColor(Field.Empty);
             }
             else if (e.Button == MouseButtons.Right) {
-                int type = 0;
-                for (int i = -2; i < 3; i++)
-                    if (btn.BackColor == this.puzzleBoard.Painter.GetColor(i)) {
-                        type = i;
-                        break;
-                    }
+                Field type = this.puzzleBoard.Painter.GetType(btn.BackColor);
+
                 ColorDialog dialog = new ColorDialog();
                 dialog.SolidColorOnly = true;
                 dialog.Color = btn.BackColor;
@@ -289,11 +285,12 @@ namespace Picross
             }
         }
 
-        private bool changeColor(Btn btn, int type, Color color) {
+        private bool changeColor(Btn btn, Field type, Color color) {
             if (!this.puzzleBoard.Painter.SetColor(type, color)) {
                 MessageBox.Show("This colour is already in use.", "Colour", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
+
             if (btn != null)
                 btn.BackColor = color;
             Settings.Get.SetColor(type, color);
@@ -322,7 +319,7 @@ namespace Picross
 
         public void Draw() {
             // Draw the puzzle, and check if the innerOffset is changed
-            int selectedColour = this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Black) ? Puzzle.Black : Puzzle.Red;
+            Field selectedColour = this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black) ? Field.Black : Field.Red;
             Point innerOffset = this.puzzleBoard.Painter.InnerOffset;
 
             this.puzzleBoard.Painter.Draw(this.CreateGraphics(), this.mouse, selectedColour);
@@ -354,20 +351,20 @@ namespace Picross
         }
 
         // -- Helpers --
-        private int mouseButton2Type(MouseButtons buttons) {
+        private Field mouseButton2Type(MouseButtons buttons) {
             if (buttons == MouseButtons.Left) {
-                if (this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Black))
-                    return Puzzle.Black;
+                if (this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black))
+                    return Field.Black;
                 else
-                    return Puzzle.Red;
+                    return Field.Red;
             }
             if (buttons == MouseButtons.Right) {
-                if (this.btnColorEmpty.BackColor == this.puzzleBoard.Painter.GetColor(Puzzle.Empty))
-                    return Puzzle.Empty;
+                if (this.btnColorEmpty.BackColor == this.puzzleBoard.Painter.GetColor(Field.Empty))
+                    return Field.Empty;
                 else
-                    return Puzzle.Decoration;
+                    return Field.Decoration;
             }
-            return Puzzle.Unknown;
+            return Field.Unknown;
         }
 
         private bool moved(Point newMouse) {

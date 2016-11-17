@@ -20,6 +20,7 @@ namespace Picross
             get { return this.get("editormode", true); }
             set { this.set("editormode", value); }
         }
+
         /// <summary>
         /// Whether or strict checking is enabled
         /// </summary>
@@ -27,6 +28,7 @@ namespace Picross
             get { return this.get("strictchecking", false); }
             set { this.set("strictchecking", value); }
         }
+
         /// <summary>
         /// Whether or not darker background is enabled
         /// </summary>
@@ -40,10 +42,10 @@ namespace Picross
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public Color GetColor(int type) {
+        public Color GetColor(Field type) {
             return this.get("color" + type.ToString(), defaultColor(type));
         }
-        private Color defaultColor(int type) {
+        private Color defaultColor(Field type) {
             var colors = new Color[]
             {
                 Color.FromArgb(255, 128, 0),
@@ -52,14 +54,14 @@ namespace Picross
                 Color.FromArgb(128, 64, 0),
                 Color.FromArgb(255, 0, 0)
             };
-            return colors[type + 2];
+            return colors[type.Index];
         }
         /// <summary>
         /// Get a colour
         /// </summary>
         /// <param name="type"></param>
         /// <param name="color"></param>
-        public void SetColor(int type, Color color) {
+        public void SetColor(Field type, Color color) {
             this.set("color" + type.ToString(), color);
         }
     }
