@@ -153,7 +153,7 @@ namespace Picross
             }
 
             // Or autoblank all columns
-            else if (!this.EditorMode) {
+            else if (Settings.Get.UseAutoBlanker && !this.EditorMode) {
                 if (this.puzzle.IsInRangeX(p.X)) {
                     bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.backUpOriginalPuzzle, p.X);
                     for (int y = 0; y < autoblanks.Length; y++)

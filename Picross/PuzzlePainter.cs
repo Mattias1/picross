@@ -178,6 +178,10 @@ namespace Picross
         }
 
         private void drawAutoblanksHover(int squareSize, Point hover, Graphics g) {
+            if (!Settings.Get.UseAutoBlanker) {
+                return;
+            }
+
             Color hoverColor = GameMath.Lerp(this.GetColor(Field.Empty), Color.White, 0.5f);
             bool xOk = this.puzzle.IsInRangeX(hover.X);
             bool yOk = this.puzzle.IsInRangeY(hover.Y);

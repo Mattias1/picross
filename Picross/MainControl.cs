@@ -13,7 +13,7 @@ namespace Picross
         bool mouseDown;
         string fileName;
         Btn btnEditorMode, btnNewPuzzle, btnLoad, btnSave, btnSolve, btnCheck, btnClear, btnColorBlack, btnColorEmpty, btnMove, btnSize;
-        Cb cbStrictChecking, cbDarkerBackground;
+        Cb cbUseAutoBlanker, cbStrictChecking, cbDarkerBackground;
 
         public MainControl() {
             // Set some members
@@ -108,9 +108,17 @@ namespace Picross
                 this.btnSize.Hide();
             this.btnSize.Click += this.sizeClick;
 
+            // The autoblanker checkbox
+            this.cbUseAutoBlanker = new Cb("Autoblanker", this);
+            this.cbUseAutoBlanker.Size = new Size(this.btnSize.Width + 10, this.cbUseAutoBlanker.Height);
+            this.cbUseAutoBlanker.CheckedChanged += (o, e) => { Settings.Get.UseAutoBlanker = this.cbUseAutoBlanker.Checked; };
+            if (this.puzzleBoard.EditorMode)
+                this.cbUseAutoBlanker.Hide();
+            this.cbUseAutoBlanker.Checked = Settings.Get.UseAutoBlanker;
+
             // The strictness checkbox
             this.cbStrictChecking = new Cb("Strict check", this);
-            this.cbStrictChecking.Size = new Size(this.btnSize.Width + 10, this.cbStrictChecking.Height);
+            this.cbStrictChecking.Size = this.cbUseAutoBlanker.Size;
             this.cbStrictChecking.CheckedChanged += (o, e) => { Settings.Get.StrictChecking = this.cbStrictChecking.Checked; };
             if (this.puzzleBoard.EditorMode)
                 this.cbStrictChecking.Hide();
@@ -127,22 +135,17 @@ namespace Picross
         }
 
         private void editorModeClick(object o, EventArgs e) {
-            this.puzzleBoard.EditorMode = !this.puzzleBoard.EditorMode;
-            Settings.Get.EditorMode = this.puzzleBoard.EditorMode;
-            if (this.puzzleBoard.EditorMode) {
-                this.btnEditorMode.Text = "Mode: editor";
-                this.btnMove.Show();
-                this.btnSize.Show();
-                this.btnCheck.Hide();
-                this.cbStrictChecking.Hide();
-            }
-            else {
-                this.btnEditorMode.Text = "Mode: play";
-                this.btnMove.Hide();
-                this.btnSize.Hide();
-                this.btnCheck.Show();
-                this.cbStrictChecking.Show();
-            }
+            bool editorMode = !this.puzzleBoard.EditorMode;
+            this.puzzleBoard.EditorMode = editorMode;
+            Settings.Get.EditorMode = editorMode;
+
+            this.btnEditorMode.Text = editorMode ? "Mode: editor" : "Mode: play";
+            this.btnMove.Visible = editorMode;
+            this.btnSize.Visible = editorMode;
+            this.btnCheck.Visible = editorMode;
+            this.cbUseAutoBlanker.Visible = !editorMode;
+            this.cbStrictChecking.Visible = !editorMode;
+
             this.OnResize();
         }
 
@@ -343,7 +346,8 @@ namespace Picross
             this.btnColorEmpty.PositionRightOf(this.btnColorBlack, 5);
 
             this.cbDarkerBackground.PositionBottomRightInside(this);
-            this.cbStrictChecking.PositionAbove(cbDarkerBackground);
+            this.cbStrictChecking.PositionAbove(this.cbDarkerBackground);
+            this.cbUseAutoBlanker.PositionAbove(this.cbStrictChecking);
 
             // The puzzle location and size
             this.puzzleBoard.Painter.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);

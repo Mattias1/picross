@@ -37,6 +37,11 @@ namespace Picross
             set { this.set("darkerbackground", value); }
         }
 
+        public bool UseAutoBlanker {
+            get { return this.get("useautoblanker", false); }
+            set { this.set("useautoblanker", value); }
+        }
+
         /// <summary>
         /// Set a colour
         /// </summary>
