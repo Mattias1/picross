@@ -18,11 +18,9 @@ namespace Picross
         private Point size;
         private Point maxSize;
 
-        public Point Size
-        {
+        public Point Size {
             get { return this.size; }
-            set
-            {
+            set {
                 this.maxSize = value;
                 int squareSize = Math.Max(MINIMUM_SQUARE_SIZE, Math.Min((value.X - this.InnerOffset.X) / this.puzzle.Width, (value.Y - this.InnerOffset.Y) / this.puzzle.Height));
                 this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width, this.InnerOffset.Y + squareSize * this.puzzle.Height);

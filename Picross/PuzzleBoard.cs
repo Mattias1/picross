@@ -13,11 +13,9 @@ namespace Picross
         private PuzzlePainter painter;
 
         // Getters and setters
-        private Puzzle puzzle
-        {
+        private Puzzle puzzle {
             get { return this.puzzleObject; }
-            set
-            {
+            set {
                 this.puzzleObject = value;
                 if (this.painter == null)
                     this.painter = new PuzzlePainter(value, this.backUpOriginalPuzzle);
@@ -25,11 +23,9 @@ namespace Picross
                     this.painter.SetPuzzleObjects(value, this.backUpOriginalPuzzle);
             }
         }
-        public bool EditorMode
-        {
+        public bool EditorMode {
             get { return this.editorMode; }
-            set
-            {
+            set {
                 if (this.editorMode == value)
                     return;
                 this.editorMode = value;
