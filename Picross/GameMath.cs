@@ -1,5 +1,4 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 
 namespace Picross
 {
@@ -21,10 +20,10 @@ namespace Picross
         // Color stuff
         public static Color Clamp(float min, float max, Color color, bool alpha = false) {
             return Color.FromArgb(
+                alpha ? (byte)Clamp(min, max, color.A) : color.A,
                 (byte)Clamp(min, max, color.R),
                 (byte)Clamp(min, max, color.G),
-                (byte)Clamp(min, max, color.B),
-                alpha ? (byte)Clamp(min, max, color.A) : color.A
+                (byte)Clamp(min, max, color.B)
             );
         }
 

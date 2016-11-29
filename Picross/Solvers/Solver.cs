@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Picross
+namespace Picross.Solvers
 {
     class Solver
     {
@@ -13,7 +13,7 @@ namespace Picross
         }
 
         public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
-            Solver solver = new Solver(puzzle, puzzleForNumbers);
+            var solver = new Solver(puzzle, puzzleForNumbers);
 
             int nrOfSolutions = -1;
             return solver.backTracking(0, 0, ref nrOfSolutions);

@@ -51,7 +51,8 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AutoBlanker.cs" />
+    <Compile Include="Solvers\AutoBlanker.cs" />
+    <Compile Include="Solvers\LogicalSolver.cs" />
     <Compile Include="Field.cs" />
     <Compile Include="GameMath.cs" />
     <Compile Include="Main.cs">
@@ -62,7 +63,7 @@
     </Compile>
     <Compile Include="Puzzle.cs" />
     <Compile Include="PuzzlePainter.cs" />
-    <Compile Include="Solver.cs" />
+    <Compile Include="Solvers\Solver.cs" />
     <Compile Include="SizeDialog.cs">
       <SubType>Form</SubType>
     </Compile>

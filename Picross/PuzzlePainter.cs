@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
+using Picross.Solvers;
 
 namespace Picross
 {
@@ -11,7 +11,7 @@ namespace Picross
 
         private Puzzle puzzle;
         private Puzzle puzzleForNumbers;
-        private Color[] colors; // Array is 0 based, so const values + 2.
+        private Color[] colors;
         private Font numberFont;
 
         public Point Offset;
