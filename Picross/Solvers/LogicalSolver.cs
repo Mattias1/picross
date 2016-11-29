@@ -112,11 +112,9 @@ namespace Picross.Solvers
 
             public int Length => Result.Length;
 
-            public bool this[int index]
-            {
+            public bool this[int index] {
                 get { return this.Result[index]; }
-                set
-                {
+                set {
                     this.Result[index] = value;
                     this.FoundChange |= value;
                 }

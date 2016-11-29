@@ -8,19 +8,16 @@ namespace Picross
     {
         private Field[,] puzzle;
 
-        public Field this[int x, int y, bool mirror = false]
-        {
+        public Field this[int x, int y, bool mirror = false] {
             get { return mirror ? this.puzzle[y, x] : this.puzzle[x, y]; }
-            set
-            {
+            set {
                 if (mirror)
                     this.puzzle[y, x] = value;
                 else
                     this.puzzle[x, y] = value;
             }
         }
-        public Field this[Point p, bool mirror = false]
-        {
+        public Field this[Point p, bool mirror = false] {
             get { return this[p.X, p.Y, mirror]; }
             set { this[p.X, p.Y, mirror] = value; }
         }
