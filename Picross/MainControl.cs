@@ -142,7 +142,7 @@ namespace Picross
             this.btnEditorMode.Text = editorMode ? "Mode: editor" : "Mode: play";
             this.btnMove.Visible = editorMode;
             this.btnSize.Visible = editorMode;
-            this.btnCheck.Visible = editorMode;
+            this.btnCheck.Visible = !editorMode;
             this.cbUseAutoBlanker.Visible = !editorMode;
             this.cbStrictChecking.Visible = !editorMode;
 
