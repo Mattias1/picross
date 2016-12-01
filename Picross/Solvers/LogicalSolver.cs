@@ -11,36 +11,52 @@ namespace Picross.Solvers
         new public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
             var solver = new LogicalSolver(puzzle, puzzleForNumbers);
 
-            return solver.solveLogically(puzzle);
+            return solver.solveLogically(puzzle, puzzleForNumbers);
         }
 
-        private bool solveLogically(Puzzle puzzle) {
-            // The following code acts like a state machine. Each method represents a state. We hop from state to state using recursion.
+        private bool solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {
+            loopAll(puzzle);
 
-            // Loop row
-            loopRows(puzzle);
-            // Loop col
-            for (int x = 0; x < this.Puzzle.Width; x++) {
-                // Todo
+            return isSolved(puzzle, puzzleForNumbers);
+        }
+
+        private bool isSolved(Puzzle puzzle, Puzzle original) {
+            for (int y = 0; y < puzzle.Height; y++) {
+                for (int x = 0; x < puzzle.Width; x++) {
+                    if (puzzle[x, y].IsOn() != original[x, y].IsOn())
+                        return false;
+                }
             }
+            return true;
+        }
+
+
+        // The following code acts like a state machine.
+        // Each method represents a state. The return value represents whether or not it found a change.
+        // We hop from state to state using recursion.
+        private bool loopAll(Puzzle puzzle) {
+            if (loopRows(puzzle, Field.Black, Field.Empty)) return true;
+            if (loopCols(puzzle, Field.Black, Field.Empty)) return true;
+
+            if (loopRows(puzzle, Field.Empty, Field.Black)) return true;
+            if (loopCols(puzzle, Field.Empty, Field.Black)) return true;
 
             return false;
         }
 
+        private bool loopRows(Puzzle puzzle, Field search, Field opposite) => loopRows_Mirror(puzzle, search, opposite, this.Rows, false);
+        private bool loopCols(Puzzle puzzle, Field search, Field opposite) => loopRows_Mirror(puzzle, search, opposite, this.Cols, true);
 
-        // State machine mehods
-        private void loopRows(Puzzle puzzle) {
-            for (int y = 0; y < this.Puzzle.Height; y++) {
-                FoundFields resultBlack = GetRow(puzzle, Field.Black, Field.Empty, y);
+        private bool loopRows_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, bool mirror) {
+            for (int y = 0; y < this.Puzzle.GetHeight(mirror); y++) {
+                FoundFields resultBlack = GetRow_Mirror(puzzle, search, opposite, y, rows[y], mirror);
                 if (resultBlack.FoundChange) {
-                    FoundFields resultWhite = GetRow(puzzle, Field.Empty, Field.Black, y);
-                    FoundFields merged = resultBlack.Merge(resultWhite);
-                    // Todo
+                    FoundFields resultWhite = GetRow_Mirror(puzzle, opposite, search, y, rows[y], mirror);
+                    FoundFields merged = FoundFields.Merge(resultBlack, resultWhite);
+                    return loopAll(puzzle);
                 }
             }
-        }
-
-        private void loopCols() {
+            return false;
         }
 
 
@@ -67,11 +83,12 @@ namespace Picross.Solvers
                     this.Puzzle = puzzle.Clone();
 
                     this.Puzzle[x, y, mirror] = oppositeField;
-                    if (!this.canFindValidRowConfiguration_Mirror(0, y, row, mirror))
+                    if (!this.canFindValidRowConfiguration_Mirror(0, y, row, mirror)) {
                         result[x] = true;
 
-                    if (searchField.HasValue)
-                        this.Puzzle[x, y, mirror] = searchField.Value;
+                        if (searchField.HasValue)
+                            puzzle[x, y, mirror] = searchField.Value;
+                    }
                 }
             }
 
@@ -124,14 +141,14 @@ namespace Picross.Solvers
                 this.Result = new bool[length];
             }
 
-            public FoundFields Merge(FoundFields other) {
-                if (this.Length != other.Length)
+            public static FoundFields Merge(FoundFields one, FoundFields other) {
+                if (one.Length != other.Length)
                     throw new ArgumentException("Lengths must be equal to merge found fields.");
 
-                var result = new FoundFields(this.Length);
-                if (this.FoundChange || other.FoundChange) {
+                var result = new FoundFields(one.Length);
+                if (one.FoundChange || other.FoundChange) {
                     for (int i = 0; i < other.Length; i++)
-                        result[i] = this[i] || other[i];
+                        result[i] = one[i] || other[i];
                 }
 
                 return result;
