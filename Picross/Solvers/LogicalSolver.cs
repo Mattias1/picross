@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Picross.Solvers
 {
-    class LogicalSolver : Solver
+    class LogicalSolver : SolverBase
     {
         protected LogicalSolver(Puzzle puzzle, Puzzle puzzleForNumbers)
             : base(puzzle, puzzleForNumbers) { }
 
-        new public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
+        public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
             var solver = new LogicalSolver(puzzle, puzzleForNumbers);
 
             return solver.solveLogically(puzzle, puzzleForNumbers);
@@ -44,8 +44,12 @@ namespace Picross.Solvers
             return false;
         }
 
-        private bool loopRows(Puzzle puzzle, Field search, Field opposite) => loopRows_Mirror(puzzle, search, opposite, this.Rows, false);
-        private bool loopCols(Puzzle puzzle, Field search, Field opposite) => loopRows_Mirror(puzzle, search, opposite, this.Cols, true);
+        private bool loopRows(Puzzle puzzle, Field search, Field opposite) {
+            return loopRows_Mirror(puzzle, search, opposite, this.Rows, false);
+        }
+        private bool loopCols(Puzzle puzzle, Field search, Field opposite) {
+            return loopRows_Mirror(puzzle, search, opposite, this.Cols, true);
+        }
 
         private bool loopRows_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, bool mirror) {
             for (int y = 0; y < this.Puzzle.GetHeight(mirror); y++) {

@@ -203,9 +203,9 @@ namespace Picross
 
             // Solve or check for uniqueness
             if (this.EditorMode)
-                return Solver.CheckUniqueness(this.puzzle);
+                return BacktrackSolver.CheckUniqueness(this.puzzle);
             else
-                return Solver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
         }
     }
 }
