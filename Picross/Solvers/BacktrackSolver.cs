@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Picross.Solvers
+﻿namespace Picross.Solvers
 {
     class BacktrackSolver : SolverBase
     {

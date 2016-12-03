@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Runtime.InteropServices;
 
 namespace Picross
 {
@@ -76,19 +75,22 @@ namespace Picross
             // Create the puzzle
             Puzzle result = new Puzzle(width, height);
             int nrIndex = 0;
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     Field field = Field.Parse(numbers[nrIndex++]);
                     if (field == Field.Black || field == Field.Red)
                         result.puzzle[x, y] = field;
                 }
+            }
             return result;
         }
 
         public void Clear() {
-            for (int y = 0; y < this.Height; y++)
-                for (int x = 0; x < this.Width; x++)
+            for (int y = 0; y < this.Height; y++) {
+                for (int x = 0; x < this.Width; x++) {
                     this[x, y] = Field.Unknown;
+                }
+            }
         }
 
         public void Move(Point move) {
@@ -132,10 +134,12 @@ namespace Picross
         public void ComputeRowAndColNumbers(out List<int>[] rows, out List<int>[] cols) {
             rows = new List<int>[this.Height];
             cols = new List<int>[this.Width];
-            for (int y = 0; y < this.Height; y++)
+            for (int y = 0; y < this.Height; y++) {
                 rows[y] = this.GetRowNumberList(y);
-            for (int x = 0; x < this.Width; x++)
+            }
+            for (int x = 0; x < this.Width; x++) {
                 cols[x] = this.GetColNumberList(x);
+            }
         }
 
         public string GetRowNumbers(int y) {
@@ -179,9 +183,10 @@ namespace Picross
         public bool IsEmpty() {
             // Check if the array is an empty array
             for (int y = 0; y < this.Height; y++) {
-                for (int x = 0; x < this.Width; x++)
+                for (int x = 0; x < this.Width; x++) {
                     if (this.puzzle[x, y] != Field.Unknown)
                         return false;
+                }
             }
             return true;
         }
