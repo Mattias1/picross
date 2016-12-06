@@ -6,6 +6,7 @@ namespace Picross
     class PuzzleBoard
     {
         public enum CheckResult { Mistake, AllRightSoFar, Finished };
+        public enum SolveResult { IDontKnow, NoSolution, MultipleSolutions, NoLogicSolution, UniqueOrLogicSolution };
 
         // Members
         private Puzzle puzzleObject;
@@ -192,20 +193,44 @@ namespace Picross
             return finished ? CheckResult.Finished : CheckResult.AllRightSoFar;
         }
 
-        public bool Solve(bool setPuzzle) {
-            // Only allow replacing the puzzle in play mode
-            if (this.EditorMode)
-                setPuzzle = false;
-
+        public SolveResult Solve() {
             // Check if the original puzzle is not empty (if one accidentally started designing in play mode)
-            if (setPuzzle && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty()))
-                return true;
+            if (!this.EditorMode && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty())) {
+                return SolveResult.IDontKnow;
+            }
 
             // Solve or check for uniqueness
-            if (this.EditorMode)
-                return BacktrackSolver.CheckUniqueness(this.puzzle);
-            else
-                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+            bool result;
+            if (this.EditorMode) {
+                Puzzle solvePuzzle = this.puzzle.EmptyClone();
+                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
+                    result = LogicalSolver.Solve(solvePuzzle, this.puzzle);
+                    if (result)
+                        return SolveResult.UniqueOrLogicSolution;
+                }
+
+                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
+                    var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle);
+                    if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
+                        return SolveResult.NoLogicSolution;
+
+                    return backtrackResult;
+                }
+            }
+            else {
+                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
+                    result = LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+                    if (result)
+                        return SolveResult.UniqueOrLogicSolution;
+                }
+                if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
+                    result = BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+                    if (result)
+                        return SolveResult.UniqueOrLogicSolution;
+                }
+            }
+
+            return SolveResult.NoSolution;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
-using System.Windows.Forms;
 using System.IO;
+using System.Windows.Forms;
 using MattyControls;
 
 namespace Picross
@@ -256,13 +256,33 @@ namespace Picross
 
         private void solveClick(object o, EventArgs e) {
             this.Cursor = Cursors.WaitCursor;
-            if (!this.puzzleBoard.Solve(!this.puzzleBoard.EditorMode))
-                MessageBox.Show("This puzzle has no unique solution.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            else if (this.puzzleBoard.EditorMode)
+
+            var result = this.puzzleBoard.Solve();
+
+            string errorMessage = this.errorFromSolveResult(result);
+            if (!string.IsNullOrEmpty(errorMessage))
+                MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+            if (this.puzzleBoard.EditorMode && result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
                 MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
             if (!this.puzzleBoard.EditorMode)
                 this.Draw();
+
             this.Cursor = Cursors.Default;
+        }
+
+        private string errorFromSolveResult(PuzzleBoard.SolveResult result) {
+            switch (result) {
+            case PuzzleBoard.SolveResult.NoSolution:
+                return this.puzzleBoard.EditorMode ? "This puzzle has no solution." : "No unique solution found.";
+            case PuzzleBoard.SolveResult.MultipleSolutions:
+                return "This puzzle has multiple solutions.";
+            case PuzzleBoard.SolveResult.NoLogicSolution:
+                return "This puzzle has a unique solution, but can't be solved without guessing.";
+            default:
+                return null;
+            }
         }
 
         private void colorBtnMouseDown(object o, MouseEventArgs e) {

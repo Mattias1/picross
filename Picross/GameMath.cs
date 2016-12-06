@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Linq;
 
 namespace Picross
 {
@@ -34,6 +35,10 @@ namespace Picross
                 (byte)Lerp(from.G, to.G, t),
                 (byte)Lerp(from.B, to.B, t)
             );
+        }
+
+        public static bool IsOneOf<T>(this T enumerator, params T[] values) {
+            return values.Contains(enumerator);
         }
     }
 }

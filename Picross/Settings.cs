@@ -5,6 +5,8 @@ namespace Picross
 {
     class Settings : SettingsSingleton
     {
+        public enum SolverSetting { Smart = 1, OnlyBacktracking = 2, OnlyLogic = 3 };
+
         protected override string Name => "Picross";
 
         /// <summary>
@@ -37,6 +39,9 @@ namespace Picross
             set { this.set("darkerbackground", value); }
         }
 
+        /// <summary>
+        /// Whether or not to use the autoblanker
+        /// </summary>
         public bool UseAutoBlanker {
             get { return this.get("useautoblanker", false); }
             set { this.set("useautoblanker", value); }
@@ -68,6 +73,14 @@ namespace Picross
         /// <param name="color"></param>
         public void SetColor(Field type, Color color) {
             this.set("color" + type.ToString(), color);
+        }
+
+        /// <summary>
+        /// Which algorithms to use for solving and uniqueness checks
+        /// </summary>
+        public SolverSetting Solver {
+            get { return this.getEnum("solver", SolverSetting.Smart); }
+            set { this.setEnum("solver", value); }
         }
     }
 }

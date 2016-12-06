@@ -12,11 +12,16 @@
             return solver.backTracking(0, 0, ref nrOfSolutions);
         }
 
-        public static bool CheckUniqueness(Puzzle puzzle) {
+        public static PuzzleBoard.SolveResult CheckUniqueness(Puzzle puzzle) {
             BacktrackSolver solver = new BacktrackSolver(puzzle.Clone(), puzzle);
 
             int nrOfSolutions = 0;
-            return solver.backTracking(0, 0, ref nrOfSolutions);
+            bool result = solver.backTracking(0, 0, ref nrOfSolutions);
+
+            if (result)
+                return PuzzleBoard.SolveResult.UniqueOrLogicSolution;
+
+            return nrOfSolutions == 0 ? PuzzleBoard.SolveResult.NoSolution : PuzzleBoard.SolveResult.MultipleSolutions;
         }
 
         private bool backTracking(int x, int y, ref int uniqueness) {

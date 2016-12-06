@@ -126,7 +126,7 @@ namespace Picross.Solvers
         }
 
 
-        public class FoundFields
+        protected class FoundFields
         {
             public bool FoundChange;
             public bool[] Result;

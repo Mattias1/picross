@@ -33,9 +33,12 @@ namespace Picross
         }
 
         public Puzzle Clone() {
-            var result = new Puzzle(this.Width, this.Height);
+            var result = this.EmptyClone();
             result.puzzle = (Field[,])this.puzzle.Clone();
             return result;
+        }
+        public Puzzle EmptyClone() {
+            return new Puzzle(this.Width, this.Height);
         }
 
         public override string ToString() {
