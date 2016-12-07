@@ -280,6 +280,8 @@ namespace Picross.UI
                 return "This puzzle has multiple solutions.";
             case PuzzleBoard.SolveResult.NoLogicSolution:
                 return "This puzzle has a unique solution, but can't be solved without guessing.";
+            case PuzzleBoard.SolveResult.EditorModeConflict:
+                return "Editor mode conflict.";
             default:
                 return null;
             }

@@ -7,7 +7,7 @@ namespace Picross
     class PuzzleBoard
     {
         public enum CheckResult { Mistake, AllRightSoFar, Finished };
-        public enum SolveResult { IDontKnow, NoSolution, MultipleSolutions, NoLogicSolution, UniqueOrLogicSolution };
+        public enum SolveResult { EditorModeConflict, NoSolution, MultipleSolutions, NoLogicSolution, UniqueOrLogicSolution };
 
         // Members
         private Puzzle puzzleObject;
@@ -197,7 +197,7 @@ namespace Picross
         public SolveResult Solve() {
             // Check if the original puzzle is not empty (if one accidentally started designing in play mode)
             if (!this.EditorMode && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty())) {
-                return SolveResult.IDontKnow;
+                return SolveResult.EditorModeConflict;
             }
 
             // Solve or check for uniqueness
