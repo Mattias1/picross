@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Picross.Model;
 
 namespace Picross.Solvers
 {

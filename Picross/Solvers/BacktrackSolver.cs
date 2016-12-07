@@ -1,4 +1,6 @@
-﻿namespace Picross.Solvers
+﻿using Picross.Model;
+
+namespace Picross.Solvers
 {
     class BacktrackSolver : SolverBase
     {

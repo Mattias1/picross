@@ -54,7 +54,7 @@
     <Compile Include="Helpers\ExtensionHelper.cs" />
     <Compile Include="Solvers\AutoBlanker.cs" />
     <Compile Include="Solvers\LogicalSolver.cs" />
-    <Compile Include="Field.cs" />
+    <Compile Include="Model\Field.cs" />
     <Compile Include="Helpers\MathHelper.cs" />
     <Compile Include="UI\Main.cs">
       <SubType>Form</SubType>
@@ -62,7 +62,7 @@
     <Compile Include="UI\MainControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Puzzle.cs" />
+    <Compile Include="Model\Puzzle.cs" />
     <Compile Include="UI\PuzzlePainter.cs" />
     <Compile Include="Solvers\BacktrackSolver.cs" />
     <Compile Include="UI\SizeDialog.cs">
@@ -75,7 +75,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="PuzzleBoard.cs" />
+    <Compile Include="Model\PuzzleBoard.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Solvers\SolverBase.cs" />
   </ItemGroup>

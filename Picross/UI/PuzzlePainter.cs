@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using Picross.Solvers;
 using Picross.Helpers;
+using Picross.Model;
+using Picross.Solvers;
 
 namespace Picross.UI
 {

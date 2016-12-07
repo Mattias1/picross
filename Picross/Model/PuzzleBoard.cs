@@ -3,7 +3,7 @@ using Picross.Solvers;
 using Picross.UI;
 using Picross.Helpers;
 
-namespace Picross
+namespace Picross.Model
 {
     class PuzzleBoard
     {

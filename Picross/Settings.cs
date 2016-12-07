@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using MattyControls;
+using Picross.Model;
 
 namespace Picross
 {
