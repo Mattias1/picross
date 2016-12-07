@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using Picross.Solvers;
+using Picross.Helpers;
 
 namespace Picross.UI
 {
@@ -172,7 +173,7 @@ namespace Picross.UI
 
         private void drawHover(int squareSize, Point hover, Field selectedColour, Graphics g) {
             if (this.puzzle.IsInRange(hover)) {
-                Color hoverColor = GameMath.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
+                Color hoverColor = MathHelper.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
                 g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
             }
         }
@@ -182,7 +183,7 @@ namespace Picross.UI
                 return;
             }
 
-            Color hoverColor = GameMath.Lerp(this.GetColor(Field.Empty), Color.White, 0.5f);
+            Color hoverColor = MathHelper.Lerp(this.GetColor(Field.Empty), Color.White, 0.5f);
             bool xOk = this.puzzle.IsInRangeX(hover.X);
             bool yOk = this.puzzle.IsInRangeY(hover.Y);
 

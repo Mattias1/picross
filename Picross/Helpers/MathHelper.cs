@@ -1,9 +1,8 @@
 ﻿using System.Drawing;
-using System.Linq;
 
-namespace Picross
+namespace Picross.Helpers
 {
-    public static class GameMath
+    public static class MathHelper
     {
         // Float stuff
         public static float Clamp(float min, float max, float value) {
@@ -15,7 +14,7 @@ namespace Picross
         }
 
         public static float Lerp(float from, float to, float t) {
-            return from + (to - from) * GameMath.Clamp(0, 1, t);
+            return from + (to - from) * MathHelper.Clamp(0, 1, t);
         }
 
         // Color stuff
@@ -35,10 +34,6 @@ namespace Picross
                 (byte)Lerp(from.G, to.G, t),
                 (byte)Lerp(from.B, to.B, t)
             );
-        }
-
-        public static bool IsOneOf<T>(this T enumerator, params T[] values) {
-            return values.Contains(enumerator);
         }
     }
 }
