@@ -2,7 +2,7 @@
 using System.Windows.Forms;
 using MattyControls;
 
-namespace Picross
+namespace Picross.UI
 {
     class SizeDialog : Form
     {

@@ -55,16 +55,16 @@
     <Compile Include="Solvers\LogicalSolver.cs" />
     <Compile Include="Field.cs" />
     <Compile Include="GameMath.cs" />
-    <Compile Include="Main.cs">
+    <Compile Include="UI\Main.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainControl.cs">
+    <Compile Include="UI\MainControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Puzzle.cs" />
-    <Compile Include="PuzzlePainter.cs" />
+    <Compile Include="UI\PuzzlePainter.cs" />
     <Compile Include="Solvers\BacktrackSolver.cs" />
-    <Compile Include="SizeDialog.cs">
+    <Compile Include="UI\SizeDialog.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Program.cs" />

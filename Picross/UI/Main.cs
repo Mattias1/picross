@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using MattyControls;
 
-namespace Picross
+namespace Picross.UI
 {
     class Main : MattyForm
     {

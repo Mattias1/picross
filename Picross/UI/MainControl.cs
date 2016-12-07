@@ -4,7 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using MattyControls;
 
-namespace Picross
+namespace Picross.UI
 {
     class MainControl : MattyUserControl
     {

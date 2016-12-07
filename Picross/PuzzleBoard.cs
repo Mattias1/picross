@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using Picross.Solvers;
+using Picross.UI;
 
 namespace Picross
 {

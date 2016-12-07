@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using Picross.Solvers;
 
-namespace Picross
+namespace Picross.UI
 {
     class PuzzlePainter
     {
