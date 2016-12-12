@@ -260,7 +260,7 @@ namespace Picross.UI
 
             var result = this.puzzleBoard.Solve();
 
-            string errorMessage = this.errorFromSolveResult(result);
+            string errorMessage = this.solveResultErrorMessage(result);
             if (!string.IsNullOrEmpty(errorMessage))
                 MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
@@ -273,10 +273,12 @@ namespace Picross.UI
             this.Cursor = Cursors.Default;
         }
 
-        private string errorFromSolveResult(PuzzleBoard.SolveResult result) {
+        private string solveResultErrorMessage(PuzzleBoard.SolveResult result) {
             switch (result) {
-            case PuzzleBoard.SolveResult.NoSolution:
-                return this.puzzleBoard.EditorMode ? "This puzzle has no solution." : "No unique solution found.";
+            case PuzzleBoard.SolveResult.NoSolutionFound:
+                return "No unique solution found.";
+            case PuzzleBoard.SolveResult.NoSolutionExists:
+                return "This puzzle has no solution.";
             case PuzzleBoard.SolveResult.MultipleSolutions:
                 return "This puzzle has multiple solutions.";
             case PuzzleBoard.SolveResult.NoLogicSolution:

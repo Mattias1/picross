@@ -9,10 +9,10 @@ namespace Picross.Solvers
         protected LogicalSolver(Puzzle puzzle, Puzzle puzzleForNumbers)
             : base(puzzle, puzzleForNumbers) { }
 
-        public static bool Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
+        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
             var solver = new LogicalSolver(puzzle, puzzleForNumbers);
 
-            return solver.solveLogically(puzzle, puzzleForNumbers);
+            return solver.solveLogically(puzzle, puzzleForNumbers) ? PuzzleBoard.SolveResult.UniqueOrLogicSolution : PuzzleBoard.SolveResult.NoSolutionFound;
         }
 
         private bool solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {

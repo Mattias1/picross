@@ -6,7 +6,7 @@ namespace Picross
 {
     class Settings : SettingsSingleton
     {
-        public enum SolverSetting { Smart = 1, OnlyBacktracking = 2, OnlyLogic = 3 };
+        public enum SolverSetting { Smart, OnlyBacktracking, OnlyLogic };
 
         protected override string Name => "Picross";
 

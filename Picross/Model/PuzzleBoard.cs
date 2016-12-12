@@ -7,8 +7,17 @@ namespace Picross.Model
 {
     class PuzzleBoard
     {
-        public enum CheckResult { Mistake, AllRightSoFar, Finished };
-        public enum SolveResult { EditorModeConflict, NoSolution, MultipleSolutions, NoLogicSolution, UniqueOrLogicSolution };
+        public enum CheckResult
+        {
+            Mistake, AllRightSoFar, Finished
+        };
+        public enum SolveResult
+        {
+            Cancelled, EditorModeConflict,
+            NoSolutionFound, NoSolutionExists,
+            MultipleSolutions, NoLogicSolution,
+            UniqueOrLogicSolution
+        };
 
         // Members
         private Puzzle puzzleObject;
@@ -202,37 +211,46 @@ namespace Picross.Model
             }
 
             // Solve or check for uniqueness
-            bool result;
-            if (this.EditorMode) {
-                Puzzle solvePuzzle = this.puzzle.EmptyClone();
-                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                    result = LogicalSolver.Solve(solvePuzzle, this.puzzle);
-                    if (result)
-                        return SolveResult.UniqueOrLogicSolution;
-                }
+            if (this.EditorMode)
+                return this.solveEditorMode();
+            return this.solvePlayMode();
+        }
 
-                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
-                    var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle);
-                    if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
-                        return SolveResult.NoLogicSolution;
-
-                    return backtrackResult;
-                }
-            }
-            else {
-                if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                    result = LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
-                    if (result)
-                        return SolveResult.UniqueOrLogicSolution;
-                }
-                if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
-                    result = BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
-                    if (result)
-                        return SolveResult.UniqueOrLogicSolution;
-                }
+        private SolveResult solveEditorMode() {
+            Puzzle solvePuzzle = this.puzzle.EmptyClone();
+            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
+                var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle);
+                if (logicResult == SolveResult.UniqueOrLogicSolution)
+                    return logicResult;
             }
 
-            return SolveResult.NoSolution;
+            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
+                var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle);
+                if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
+                    return SolveResult.NoLogicSolution;
+
+                return this.adjustNoSolutionResult(backtrackResult);
+            }
+
+            return this.adjustNoSolutionResult(SolveResult.NoSolutionFound);
+        }
+
+        private SolveResult adjustNoSolutionResult(SolveResult result) {
+            if (Settings.Get.Solver == Settings.SolverSetting.Smart && result == SolveResult.NoSolutionFound)
+                return SolveResult.NoSolutionExists;
+            return result;
+        }
+
+        private SolveResult solvePlayMode() {
+            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
+                return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+            }
+
+            if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
+                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+            }
+
+            return SolveResult.NoSolutionFound;
         }
     }
 }
