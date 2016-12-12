@@ -204,7 +204,7 @@ namespace Picross.Model
             return finished ? CheckResult.Finished : CheckResult.AllRightSoFar;
         }
 
-        public SolveResult Solve() {
+        public SolveResult Solve(ThreadHelper threadHelper) {
             // Check if the original puzzle is not empty (if one accidentally started designing in play mode)
             if (!this.EditorMode && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty())) {
                 return SolveResult.EditorModeConflict;
@@ -212,11 +212,11 @@ namespace Picross.Model
 
             // Solve or check for uniqueness
             if (this.EditorMode)
-                return this.solveEditorMode();
-            return this.solvePlayMode();
+                return this.solveEditorMode(threadHelper);
+            return this.solvePlayMode(threadHelper);
         }
 
-        private SolveResult solveEditorMode() {
+        private SolveResult solveEditorMode(ThreadHelper threadHelper) {
             Puzzle solvePuzzle = this.puzzle.EmptyClone();
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
                 var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle);
@@ -241,7 +241,7 @@ namespace Picross.Model
             return result;
         }
 
-        private SolveResult solvePlayMode() {
+        private SolveResult solvePlayMode(ThreadHelper threadHelper) {
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
                 return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
             }

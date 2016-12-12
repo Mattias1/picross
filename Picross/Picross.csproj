@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers\ExtensionHelper.cs" />
+    <Compile Include="Helpers\ThreadHelper.cs" />
     <Compile Include="Solvers\AutoBlanker.cs" />
     <Compile Include="Solvers\LogicalSolver.cs" />
     <Compile Include="Model\Field.cs" />

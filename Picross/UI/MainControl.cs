@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using MattyControls;
 using Picross.Model;
+using Picross.Helpers;
 
 namespace Picross.UI
 {
@@ -15,12 +16,18 @@ namespace Picross.UI
         string fileName;
         Btn btnEditorMode, btnNewPuzzle, btnLoad, btnSave, btnSolve, btnCheck, btnClear, btnColorBlack, btnColorEmpty, btnMove, btnSize;
         Cb cbUseAutoBlanker, cbStrictChecking, cbDarkerBackground;
+        ThreadHelper threadHelper;
 
         public MainControl() {
             // Set some members
             this.puzzleBoard = new PuzzleBoard(20, 15, Settings.Get.EditorMode);
             this.mouse = new Point(-1, -1);
             this.fileName = "";
+
+            // Manage threadhelper
+            this.threadHelper = new ThreadHelper();
+            this.threadHelper.OnBeforeRun += showHideThreadHelperButtons;
+            this.threadHelper.OnAfterRun += showHideThreadHelperButtons;
 
             // Manage events
             this.manageEvents();
@@ -53,6 +60,19 @@ namespace Picross.UI
                     this.Draw();
                 }
             };
+        }
+
+        private void showHideThreadHelperButtons(object o, EventArgs e) {
+            bool show = !this.threadHelper.Running;
+
+            this.btnEditorMode.Enabled = show;
+            this.btnNewPuzzle.Enabled = show;
+            this.btnLoad.Enabled = show;
+            this.btnSave.Enabled = show;
+            this.btnCheck.Enabled = show;
+            this.btnClear.Enabled = show;
+            this.btnMove.Enabled = show;
+            this.btnSize.Enabled = show;
         }
 
         // -- Buttons --
@@ -258,19 +278,25 @@ namespace Picross.UI
         private void solveClick(object o, EventArgs e) {
             this.Cursor = Cursors.WaitCursor;
 
-            var result = this.puzzleBoard.Solve();
+            this.threadHelper.Run(
+                this.puzzleBoard.Solve,
+                (PuzzleBoard.SolveResult result) => {
+                    string errorMessage = this.solveResultErrorMessage(result);
+                    if (!string.IsNullOrEmpty(errorMessage))
+                        MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-            string errorMessage = this.solveResultErrorMessage(result);
-            if (!string.IsNullOrEmpty(errorMessage))
-                MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    if (this.puzzleBoard.EditorMode && result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
+                        MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            if (this.puzzleBoard.EditorMode && result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
-                MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (!this.puzzleBoard.EditorMode)
+                        this.Draw();
 
-            if (!this.puzzleBoard.EditorMode)
-                this.Draw();
-
-            this.Cursor = Cursors.Default;
+                    this.Cursor = Cursors.Default;
+                },
+                () => {
+                    this.Cursor = Cursors.Default;
+                }
+            );
         }
 
         private string solveResultErrorMessage(PuzzleBoard.SolveResult result) {
