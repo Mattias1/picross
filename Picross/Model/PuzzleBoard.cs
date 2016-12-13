@@ -219,13 +219,13 @@ namespace Picross.Model
         private SolveResult solveEditorMode(ThreadHelper threadHelper) {
             Puzzle solvePuzzle = this.puzzle.EmptyClone();
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle);
+                var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle, threadHelper);
                 if (logicResult == SolveResult.UniqueOrLogicSolution)
                     return logicResult;
             }
 
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
-                var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle);
+                var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle, threadHelper);
                 if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
                     return SolveResult.NoLogicSolution;
 
@@ -243,11 +243,11 @@ namespace Picross.Model
 
         private SolveResult solvePlayMode(ThreadHelper threadHelper) {
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+                return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
             }
 
             if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
-                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle);
+                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
             }
 
             return SolveResult.NoSolutionFound;

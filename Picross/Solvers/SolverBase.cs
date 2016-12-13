@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Picross.Helpers;
 using Picross.Model;
 
 namespace Picross.Solvers
@@ -7,9 +8,12 @@ namespace Picross.Solvers
     {
         protected Puzzle Puzzle;
         protected readonly List<int>[] Rows, Cols;
+        protected readonly ThreadHelper ThreadHelper;
 
-        protected SolverBase(Puzzle puzzle, Puzzle puzzleForNumbers) {
+        protected SolverBase(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
             this.Puzzle = puzzle;
+            this.ThreadHelper = threadHelper;
+
             puzzleForNumbers.ComputeRowAndColNumbers(out this.Rows, out this.Cols);
         }
 

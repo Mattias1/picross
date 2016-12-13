@@ -1,22 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using Picross.Helpers;
 using Picross.Model;
 
 namespace Picross.Solvers
 {
     class LogicalSolver : SolverBase
     {
-        protected LogicalSolver(Puzzle puzzle, Puzzle puzzleForNumbers)
-            : base(puzzle, puzzleForNumbers) { }
+        protected LogicalSolver(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper)
+            : base(puzzle, puzzleForNumbers, threadHelper) { }
 
-        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
-            var solver = new LogicalSolver(puzzle, puzzleForNumbers);
+        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
+            var solver = new LogicalSolver(puzzle, puzzleForNumbers, threadHelper);
 
-            return solver.solveLogically(puzzle, puzzleForNumbers) ? PuzzleBoard.SolveResult.UniqueOrLogicSolution : PuzzleBoard.SolveResult.NoSolutionFound;
+            bool result = solver.solveLogically(puzzle, puzzleForNumbers);
+
+            if (threadHelper.Cancelling)
+                return PuzzleBoard.SolveResult.Cancelled;
+
+            return result ? PuzzleBoard.SolveResult.UniqueOrLogicSolution : PuzzleBoard.SolveResult.NoSolutionFound;
         }
 
         private bool solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {
             loopAll(puzzle);
+
+            if (this.ThreadHelper.Cancelling)
+                return false;
 
             return isSolved(puzzle, puzzleForNumbers);
         }
@@ -36,6 +45,8 @@ namespace Picross.Solvers
         // Each method represents a state. The return value represents whether or not it found a change.
         // We hop from state to state using recursion.
         private bool loopAll(Puzzle puzzle) {
+            if (this.ThreadHelper.Cancelling) return false;
+
             if (loopRows(puzzle, Field.Black, Field.Empty)) return true;
             if (loopCols(puzzle, Field.Black, Field.Empty)) return true;
 
@@ -53,6 +64,9 @@ namespace Picross.Solvers
         }
 
         private bool loopRows_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, bool mirror) {
+            if (this.ThreadHelper.Cancelling)
+                return false;
+
             for (int y = 0; y < this.Puzzle.GetHeight(mirror); y++) {
                 FoundFields resultBlack = GetRow_Mirror(puzzle, search, opposite, y, rows[y], mirror);
                 if (resultBlack.FoundChange) {

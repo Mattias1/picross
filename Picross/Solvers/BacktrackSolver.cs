@@ -1,21 +1,22 @@
-﻿using Picross.Model;
+﻿using Picross.Helpers;
+using Picross.Model;
 
 namespace Picross.Solvers
 {
     class BacktrackSolver : SolverBase
     {
-        private BacktrackSolver(Puzzle puzzle, Puzzle puzzleForNumbers)
-            : base(puzzle, puzzleForNumbers) { }
+        private BacktrackSolver(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper)
+            : base(puzzle, puzzleForNumbers, threadHelper) { }
 
-        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers) {
-            var solver = new BacktrackSolver(puzzle, puzzleForNumbers);
+        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
+            var solver = new BacktrackSolver(puzzle, puzzleForNumbers, threadHelper);
 
             int nrOfSolutions = -1;
             return solver.backTracking(0, 0, ref nrOfSolutions);
         }
 
-        public static PuzzleBoard.SolveResult CheckUniqueness(Puzzle puzzle) {
-            BacktrackSolver solver = new BacktrackSolver(puzzle.Clone(), puzzle);
+        public static PuzzleBoard.SolveResult CheckUniqueness(Puzzle puzzle, ThreadHelper threadHelper) {
+            BacktrackSolver solver = new BacktrackSolver(puzzle.Clone(), puzzle, threadHelper);
 
             int nrOfSolutions = 0;
             return solver.backTracking(0, 0, ref nrOfSolutions);
@@ -23,6 +24,8 @@ namespace Picross.Solvers
 
         private PuzzleBoard.SolveResult backTracking(int x, int y, ref int uniqueness) {
             // Termination criterium
+            if (this.ThreadHelper.Cancelling)
+                return PuzzleBoard.SolveResult.Cancelled;
             if (uniqueness > 1)
                 return PuzzleBoard.SolveResult.MultipleSolutions;
             if (y == this.Puzzle.Height || y == -1) {
@@ -36,13 +39,13 @@ namespace Picross.Solvers
             this.Puzzle[x, y] = Field.Black;
             if (CheckXYSoFar(x, y)) {
                 var result = backTracking(nextX(x), nextY(x, y), ref uniqueness);
-                if (result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
+                if (result.IsOneOf(PuzzleBoard.SolveResult.UniqueOrLogicSolution, PuzzleBoard.SolveResult.Cancelled))
                     return result;
             }
             this.Puzzle[x, y] = Field.Empty;
             if (CheckXYSoFar(x, y)) {
                 var result = backTracking(nextX(x), nextY(x, y), ref uniqueness);
-                if (result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
+                if (result.IsOneOf(PuzzleBoard.SolveResult.UniqueOrLogicSolution, PuzzleBoard.SolveResult.Cancelled))
                     return result;
             }
 

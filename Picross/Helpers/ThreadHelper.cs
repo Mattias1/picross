@@ -28,12 +28,12 @@ namespace Picross.Helpers
         }
         public bool Cancelling => this.worker.CancellationPending;
 
-        public bool Stop() {
+        public bool Cancel() {
             if (!this.Running) return false;
 
             this.worker.CancelAsync();
-            this.cleanUp();
             this.onCancel();
+            this.cleanUp();
             return true;
         }
 
@@ -43,6 +43,8 @@ namespace Picross.Helpers
             var resultCatcher = new ResultCatcher<T>();
 
             this.worker = new BackgroundWorker();
+            this.worker.WorkerSupportsCancellation = true;
+
             this.worker.DoWork += (o, e) => {
                 resultCatcher.Result = body(this);
             };
@@ -65,44 +67,6 @@ namespace Picross.Helpers
         class ResultCatcher<T>
         {
             public T Result;
-        }
-    }
-
-    // TODO: remove (if no longer necessary) (or take this one and delete the other... if only I know a way to kill it.
-    // Then I could make the callback run on the gui thread possibly. With the result thing.
-    class ThreadHelperOld
-    {
-        private Action onCancel;
-        private Thread thread;
-
-        public bool Running { get; private set; }
-
-        public void Stop() {
-            if (!this.Running) return;
-
-            this.thread.Abort();
-            this.cleanUp();
-            this.onCancel();
-        }
-
-        public void Run<T>(Func<T> body, Action<T> onSuccess, Action onCancel) {
-            if (this.Running) return;
-
-            this.onCancel = onCancel;
-            this.thread = new Thread(() => {
-                T result = body();
-                onSuccess(result);
-                this.cleanUp();
-            });
-
-            this.thread.Start();
-            this.Running = true;
-        }
-
-        private void cleanUp() {
-            this.Running = false;
-            this.onCancel = null;
-            this.thread = null;
         }
     }
 }

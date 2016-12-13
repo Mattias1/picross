@@ -26,8 +26,8 @@ namespace Picross.UI
 
             // Manage threadhelper
             this.threadHelper = new ThreadHelper();
-            this.threadHelper.OnBeforeRun += showHideThreadHelperButtons;
-            this.threadHelper.OnAfterRun += showHideThreadHelperButtons;
+            this.threadHelper.OnBeforeRun += updateButtonsForThreadHelper;
+            this.threadHelper.OnAfterRun += updateButtonsForThreadHelper;
 
             // Manage events
             this.manageEvents();
@@ -62,7 +62,7 @@ namespace Picross.UI
             };
         }
 
-        private void showHideThreadHelperButtons(object o, EventArgs e) {
+        private void updateButtonsForThreadHelper(object o, EventArgs e) {
             bool show = !this.threadHelper.Running;
 
             this.btnEditorMode.Enabled = show;
@@ -73,6 +73,8 @@ namespace Picross.UI
             this.btnClear.Enabled = show;
             this.btnMove.Enabled = show;
             this.btnSize.Enabled = show;
+
+            this.btnSolve.Text = show ? "Solve" : "Cancel";
         }
 
         // -- Buttons --
@@ -276,6 +278,11 @@ namespace Picross.UI
         }
 
         private void solveClick(object o, EventArgs e) {
+            if (this.threadHelper.Running) {
+                this.threadHelper.Cancel();
+                return;
+            }
+
             this.Cursor = Cursors.WaitCursor;
 
             this.threadHelper.Run(
