@@ -225,7 +225,10 @@ namespace Picross.Model
             }
 
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
-                var backtrackResult = BacktrackSolver.CheckUniqueness(solvePuzzle, threadHelper);
+                var backtrackResult = Settings.Get.Solver == Settings.SolverSetting.Smart
+                    ? BacktrackSolver.Solve(solvePuzzle, this.puzzle, threadHelper)
+                    : BacktrackSolver.CheckUniqueness(solvePuzzle, threadHelper);
+
                 if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
                     return SolveResult.NoLogicSolution;
 
