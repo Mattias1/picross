@@ -57,6 +57,7 @@
     <Compile Include="Solvers\LogicalSolver.cs" />
     <Compile Include="Model\Field.cs" />
     <Compile Include="Helpers\MathHelper.cs" />
+    <Compile Include="Solvers\PuzzleSolver.cs" />
     <Compile Include="UI\Main.cs">
       <SubType>Form</SubType>
     </Compile>

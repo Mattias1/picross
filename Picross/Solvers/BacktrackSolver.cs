@@ -8,51 +8,51 @@ namespace Picross.Solvers
         private BacktrackSolver(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper)
             : base(puzzle, puzzleForNumbers, threadHelper) { }
 
-        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
+        public static PuzzleSolver.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
             var solver = new BacktrackSolver(puzzle, puzzleForNumbers, threadHelper);
 
             int nrOfSolutions = -1;
             return solver.backTracking(0, 0, ref nrOfSolutions);
         }
 
-        public static PuzzleBoard.SolveResult CheckUniqueness(Puzzle puzzle, ThreadHelper threadHelper) {
+        public static PuzzleSolver.SolveResult CheckUniqueness(Puzzle puzzle, ThreadHelper threadHelper) {
             BacktrackSolver solver = new BacktrackSolver(puzzle.Clone(), puzzle, threadHelper);
 
             int nrOfSolutions = 0;
             return solver.backTracking(0, 0, ref nrOfSolutions);
         }
 
-        private PuzzleBoard.SolveResult backTracking(int x, int y, ref int uniqueness) {
+        private PuzzleSolver.SolveResult backTracking(int x, int y, ref int uniqueness) {
             // Termination criterium
             if (this.ThreadHelper.Cancelling)
-                return PuzzleBoard.SolveResult.Cancelled;
+                return PuzzleSolver.SolveResult.Cancelled;
             if (uniqueness > 1)
-                return PuzzleBoard.SolveResult.MultipleSolutions;
+                return PuzzleSolver.SolveResult.MultipleSolutions;
             if (y == this.Puzzle.Height || y == -1) {
                 if (uniqueness == -1)   // Don't check on uniqeness, so we can return.
-                    return PuzzleBoard.SolveResult.UniqueOrLogicSolution;
+                    return PuzzleSolver.SolveResult.UniqueOrLogicSolution;
                 uniqueness++;
-                return PuzzleBoard.SolveResult.NoSolutionFound; // Don't return true right now, as we want to continue searching.
+                return PuzzleSolver.SolveResult.NoSolutionFound; // Don't return true right now, as we want to continue searching.
             }
 
             // Try all values
             this.Puzzle[x, y] = Field.Black;
             if (CheckXYSoFar(x, y)) {
                 var result = backTracking(nextX(x), nextY(x, y), ref uniqueness);
-                if (result.IsOneOf(PuzzleBoard.SolveResult.UniqueOrLogicSolution, PuzzleBoard.SolveResult.Cancelled))
+                if (result.IsOneOf(PuzzleSolver.SolveResult.UniqueOrLogicSolution, PuzzleSolver.SolveResult.Cancelled))
                     return result;
             }
             this.Puzzle[x, y] = Field.Empty;
             if (CheckXYSoFar(x, y)) {
                 var result = backTracking(nextX(x), nextY(x, y), ref uniqueness);
-                if (result.IsOneOf(PuzzleBoard.SolveResult.UniqueOrLogicSolution, PuzzleBoard.SolveResult.Cancelled))
+                if (result.IsOneOf(PuzzleSolver.SolveResult.UniqueOrLogicSolution, PuzzleSolver.SolveResult.Cancelled))
                     return result;
             }
 
             // None of the values worked, so start backtracking (unless you are back at the root and have a unique solution).
             if (x == 0 && y == 0 && uniqueness == 1)
-                return PuzzleBoard.SolveResult.UniqueOrLogicSolution;
-            return PuzzleBoard.SolveResult.NoSolutionFound;
+                return PuzzleSolver.SolveResult.UniqueOrLogicSolution;
+            return PuzzleSolver.SolveResult.NoSolutionFound;
         }
 
         private int nextX(int x) {

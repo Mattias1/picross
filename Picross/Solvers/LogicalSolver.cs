@@ -10,15 +10,15 @@ namespace Picross.Solvers
         protected LogicalSolver(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper)
             : base(puzzle, puzzleForNumbers, threadHelper) { }
 
-        public static PuzzleBoard.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
+        public static PuzzleSolver.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
             var solver = new LogicalSolver(puzzle, puzzleForNumbers, threadHelper);
 
             bool result = solver.solveLogically(puzzle, puzzleForNumbers);
 
             if (threadHelper.Cancelling)
-                return PuzzleBoard.SolveResult.Cancelled;
+                return PuzzleSolver.SolveResult.Cancelled;
 
-            return result ? PuzzleBoard.SolveResult.UniqueOrLogicSolution : PuzzleBoard.SolveResult.NoSolutionFound;
+            return result ? PuzzleSolver.SolveResult.UniqueOrLogicSolution : PuzzleSolver.SolveResult.NoSolutionFound;
         }
 
         private bool solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {

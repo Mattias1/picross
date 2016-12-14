@@ -11,8 +11,11 @@ namespace Picross.UI
     {
         private const int MINIMUM_SQUARE_SIZE = 5;
 
-        private Puzzle puzzle;
-        private Puzzle puzzleForNumbers;
+        private PuzzleBoard board;
+
+        private Puzzle puzzle => board.Puzzle;
+        private Puzzle puzzleForNumbers => board.BackUpOriginalPuzzle ?? board.Puzzle;
+
         private Color[] colors;
         private Font numberFont;
 
@@ -30,9 +33,9 @@ namespace Picross.UI
             }
         }
 
-        public PuzzlePainter(Puzzle puzzle, Puzzle backupPuzzle) {
-            this.SetPuzzleObjects(puzzle, backupPuzzle);
+        public PuzzlePainter(PuzzleBoard board) {
             this.numberFont = new Font("Arial", 12);
+            this.board = board;
 
             this.Offset = new Point(10, 10);
             this.InnerOffset = new Point(120, 100);
@@ -42,11 +45,6 @@ namespace Picross.UI
             this.colors = new Color[5] {
                 s.GetColor(Field.Decoration), s.GetColor(Field.Empty), s.GetColor(Field.Unknown), s.GetColor(Field.Black), s.GetColor(Field.Red)
             };
-        }
-
-        public void SetPuzzleObjects(Puzzle puzzle, Puzzle backupPuzzle) {
-            this.puzzle = puzzle;
-            this.puzzleForNumbers = backupPuzzle ?? puzzle;
         }
 
         public Color GetColor(Field type) {

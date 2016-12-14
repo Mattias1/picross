@@ -1,82 +1,59 @@
 ﻿using System.Drawing;
 using Picross.Solvers;
 using Picross.UI;
-using Picross.Helpers;
 
 namespace Picross.Model
 {
     class PuzzleBoard
     {
-        public enum CheckResult
-        {
-            Mistake, AllRightSoFar, Finished
-        };
-        public enum SolveResult
-        {
-            Cancelled, EditorModeConflict,
-            NoSolutionFound, NoSolutionExists,
-            MultipleSolutions, NoLogicSolution,
-            UniqueOrLogicSolution
-        };
-
-        // Members
-        private Puzzle puzzleObject;
-        private Puzzle backUpOriginalPuzzle;
-
         private bool editorMode;
 
-        private PuzzlePainter painter;
+        public PuzzlePainter Painter { get; private set; }
+        public PuzzleSolver Solver { get; private set; }
 
-        // Getters and setters
-        private Puzzle puzzle {
-            get { return this.puzzleObject; }
-            set {
-                this.puzzleObject = value;
-                if (this.painter == null)
-                    this.painter = new PuzzlePainter(value, this.backUpOriginalPuzzle);
-                else
-                    this.painter.SetPuzzleObjects(value, this.backUpOriginalPuzzle);
-            }
-        }
+        public Puzzle Puzzle { get; private set; }
+        public Puzzle BackUpOriginalPuzzle { get; private set; }
+
         public bool EditorMode {
             get { return this.editorMode; }
             set {
                 if (this.editorMode == value)
                     return;
+
                 this.editorMode = value;
+
                 if (value) {
-                    if (this.backUpOriginalPuzzle != null && !this.backUpOriginalPuzzle.IsEmpty())
-                        this.puzzleObject = this.backUpOriginalPuzzle;
-                    this.backUpOriginalPuzzle = null;
+                    if (this.BackUpOriginalPuzzle != null && !this.BackUpOriginalPuzzle.IsEmpty())
+                        this.Puzzle = this.BackUpOriginalPuzzle;
+                    this.BackUpOriginalPuzzle = null;
                 }
                 else {
-                    this.backUpOriginalPuzzle = this.puzzle;
-                    this.puzzleObject = new Puzzle(this.backUpOriginalPuzzle.Width, this.backUpOriginalPuzzle.Height);
+                    this.BackUpOriginalPuzzle = this.Puzzle;
+                    this.Puzzle = new Puzzle(this.BackUpOriginalPuzzle.Width, this.BackUpOriginalPuzzle.Height);
                 }
-                this.painter.SetPuzzleObjects(this.puzzle, this.backUpOriginalPuzzle);
             }
         }
 
-        public Point PuzzleSize => this.puzzle.Size;
-
-        public PuzzlePainter Painter => this.painter;
+        public Point PuzzleSize => this.Puzzle.Size;
 
         // Methods for communication with the outside world
         public PuzzleBoard(int w, int h, bool editormode)
                 : this(new Puzzle(w, h), editormode) { }
         public PuzzleBoard(Puzzle puzzle, bool editormode) {
-            this.puzzle = puzzle;         // Also sets the painter
-            this.backUpOriginalPuzzle = null;
-            this.EditorMode = editormode; // This may override the backup puzzle and will set the painter (again)
+            this.Puzzle = puzzle;
+            this.BackUpOriginalPuzzle = null;
+            this.Painter = new PuzzlePainter(this);
+            this.Solver = new PuzzleSolver(this);
+            this.EditorMode = editormode; // This may override the backup puzzle
         }
 
         public void MouseClick(Point mouse, Field value) {
-            Point p = this.Mouse2Point(mouse, this.painter.CalculateSquareSize());
+            Point p = this.Mouse2Point(mouse, this.Painter.CalculateSquareSize());
             doMouseClick(p, value);
         }
         public void MouseClick(Point oldMouse, Point newMouse, Field value) {
-            Point from = this.Mouse2Point(oldMouse, this.painter.CalculateSquareSize());
-            Point to = this.Mouse2Point(newMouse, this.painter.CalculateSquareSize());
+            Point from = this.Mouse2Point(oldMouse, this.Painter.CalculateSquareSize());
+            Point to = this.Mouse2Point(newMouse, this.Painter.CalculateSquareSize());
             if (from.Y == to.Y) {
                 while (to.X != from.X) {
                     doMouseClick(to, value);
@@ -108,7 +85,7 @@ namespace Picross.Model
             if (lastMouse.X == nextMouse.X && lastMouse.Y == nextMouse.Y)
                 return 0;
             // Check if both mouse coordinates map to the same point, if not, the mouse moved significantly.
-            int squareSize = (this.painter.Size.X - this.painter.InnerOffset.X) / this.puzzle.Width;
+            int squareSize = (this.Painter.Size.X - this.Painter.InnerOffset.X) / this.Puzzle.Width;
             Point a = this.Mouse2Point(lastMouse, squareSize);
             Point b = this.Mouse2Point(nextMouse, squareSize);
             // Figure out how they moved
@@ -125,25 +102,25 @@ namespace Picross.Model
         }
 
         public void Clear() {
-            this.puzzle.Clear();
+            this.Puzzle.Clear();
         }
 
         public void ChangeSize(Point size) {
-            this.puzzle.ChangeSize(size);
+            this.Puzzle.ChangeSize(size);
         }
 
         public void Move(Point move) {
-            this.puzzle.Move(move);
+            this.Puzzle.Move(move);
         }
 
         public override string ToString() {
-            return (this.backUpOriginalPuzzle ?? this.puzzle).ToString();
+            return (this.BackUpOriginalPuzzle ?? this.Puzzle).ToString();
         }
 
         // Helper methods
         public Point Mouse2Point(Point mouse, int squareSize) {
             // Get the array index corresponding to the mouse coordinate
-            return Mouse2Point(mouse, squareSize, this.painter);
+            return Mouse2Point(mouse, squareSize, this.Painter);
         }
         public static Point Mouse2Point(Point mouse, int squareSize, PuzzlePainter painter) {
             // Get the array index corresponding to the mouse coordinate
@@ -158,102 +135,28 @@ namespace Picross.Model
 
         private void doMouseClick(Point p, Field value) {
             // Set the puzzle value at point p
-            if (this.puzzle.IsInRange(p)) {
-                if (this.puzzle[p] == value)
-                    this.puzzle[p] = Field.Unknown;
+            if (this.Puzzle.IsInRange(p)) {
+                if (this.Puzzle[p] == value)
+                    this.Puzzle[p] = Field.Unknown;
                 else
-                    this.puzzle[p] = value;
+                    this.Puzzle[p] = value;
             }
 
             // Or autoblank all columns
             else if (Settings.Get.UseAutoBlanker && !this.EditorMode) {
-                if (this.puzzle.IsInRangeX(p.X)) {
-                    bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.backUpOriginalPuzzle, p.X);
+                if (this.Puzzle.IsInRangeX(p.X)) {
+                    bool[] autoblanks = AutoBlanker.GetCol(this.Puzzle, this.BackUpOriginalPuzzle, p.X);
                     for (int y = 0; y < autoblanks.Length; y++)
                         if (autoblanks[y])
-                            this.puzzle[p.X, y] = Field.Empty;
+                            this.Puzzle[p.X, y] = Field.Empty;
                 }
-                else if (this.puzzle.IsInRangeY(p.Y)) {
-                    bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.backUpOriginalPuzzle, p.Y);
+                else if (this.Puzzle.IsInRangeY(p.Y)) {
+                    bool[] autoblanks = AutoBlanker.GetRow(this.Puzzle, this.BackUpOriginalPuzzle, p.Y);
                     for (int x = 0; x < autoblanks.Length; x++)
                         if (autoblanks[x])
-                            this.puzzle[x, p.Y] = Field.Empty;
+                            this.Puzzle[x, p.Y] = Field.Empty;
                 }
             }
-        }
-
-        // Solve methods
-        public CheckResult Check(bool strict) {
-            bool finished = true;
-            for (int y = 0; y < this.puzzle.Height; y++) {
-                for (int x = 0; x < this.puzzle.Width; x++) {
-                    // Mistake
-                    if ((this.puzzle[x, y].IsOn() && this.backUpOriginalPuzzle[x, y] != this.puzzle[x, y]))
-                        return CheckResult.Mistake;
-
-                    // Strict mistake (filled in a blank spot while it should be filled).
-                    if (strict && this.puzzle[x, y].IsOff() && this.backUpOriginalPuzzle[x, y].IsOn())
-                        return CheckResult.Mistake;
-
-                    // Not yet finished
-                    if (this.puzzle[x, y].IsNotOn() && this.backUpOriginalPuzzle[x, y].IsOn())
-                        finished = false;
-                }
-            }
-
-            return finished ? CheckResult.Finished : CheckResult.AllRightSoFar;
-        }
-
-        public SolveResult Solve(ThreadHelper threadHelper) {
-            // Check if the original puzzle is not empty (if one accidentally started designing in play mode)
-            if (!this.EditorMode && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty())) {
-                return SolveResult.EditorModeConflict;
-            }
-
-            // Solve or check for uniqueness
-            if (this.EditorMode)
-                return this.solveEditorMode(threadHelper);
-            return this.solvePlayMode(threadHelper);
-        }
-
-        private SolveResult solveEditorMode(ThreadHelper threadHelper) {
-            Puzzle solvePuzzle = this.puzzle.EmptyClone();
-            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle, threadHelper);
-                if (logicResult == SolveResult.UniqueOrLogicSolution)
-                    return logicResult;
-            }
-
-            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
-                var backtrackResult = Settings.Get.Solver == Settings.SolverSetting.Smart
-                    ? BacktrackSolver.Solve(solvePuzzle, this.puzzle, threadHelper)
-                    : BacktrackSolver.CheckUniqueness(solvePuzzle, threadHelper);
-
-                if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
-                    return SolveResult.NoLogicSolution;
-
-                return this.adjustNoSolutionResult(backtrackResult);
-            }
-
-            return this.adjustNoSolutionResult(SolveResult.NoSolutionFound);
-        }
-
-        private SolveResult adjustNoSolutionResult(SolveResult result) {
-            if (Settings.Get.Solver == Settings.SolverSetting.Smart && result == SolveResult.NoSolutionFound)
-                return SolveResult.NoSolutionExists;
-            return result;
-        }
-
-        private SolveResult solvePlayMode(ThreadHelper threadHelper) {
-            if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
-            }
-
-            if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
-                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
-            }
-
-            return SolveResult.NoSolutionFound;
         }
     }
 }

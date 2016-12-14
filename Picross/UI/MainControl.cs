@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using MattyControls;
 using Picross.Model;
 using Picross.Helpers;
+using Picross.Solvers;
 
 namespace Picross.UI
 {
@@ -259,14 +260,14 @@ namespace Picross.UI
         }
 
         private void checkClick(object o, EventArgs e) {
-            switch (this.puzzleBoard.Check(Settings.Get.StrictChecking)) {
-            case PuzzleBoard.CheckResult.Mistake:
+            switch (this.puzzleBoard.Solver.Check(Settings.Get.StrictChecking)) {
+            case PuzzleSolver.CheckResult.Mistake:
                 MessageBox.Show("You have one or more mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 break;
-            case PuzzleBoard.CheckResult.AllRightSoFar:
+            case PuzzleSolver.CheckResult.AllRightSoFar:
                 MessageBox.Show("You have no mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
-            case PuzzleBoard.CheckResult.Finished:
+            case PuzzleSolver.CheckResult.Finished:
                 MessageBox.Show("You have solved the puzzle.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
             }
@@ -286,13 +287,13 @@ namespace Picross.UI
             this.Cursor = Cursors.WaitCursor;
 
             this.threadHelper.Run(
-                this.puzzleBoard.Solve,
-                (PuzzleBoard.SolveResult result) => {
+                this.puzzleBoard.Solver.Solve,
+                (PuzzleSolver.SolveResult result) => {
                     string errorMessage = this.solveResultErrorMessage(result);
                     if (!string.IsNullOrEmpty(errorMessage))
                         MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-                    if (this.puzzleBoard.EditorMode && result == PuzzleBoard.SolveResult.UniqueOrLogicSolution)
+                    if (this.puzzleBoard.EditorMode && result == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
                         MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     if (!this.puzzleBoard.EditorMode)
@@ -306,17 +307,17 @@ namespace Picross.UI
             );
         }
 
-        private string solveResultErrorMessage(PuzzleBoard.SolveResult result) {
+        private string solveResultErrorMessage(PuzzleSolver.SolveResult result) {
             switch (result) {
-            case PuzzleBoard.SolveResult.NoSolutionFound:
+            case PuzzleSolver.SolveResult.NoSolutionFound:
                 return "No unique solution found.";
-            case PuzzleBoard.SolveResult.NoSolutionExists:
+            case PuzzleSolver.SolveResult.NoSolutionExists:
                 return "This puzzle has no solution.";
-            case PuzzleBoard.SolveResult.MultipleSolutions:
+            case PuzzleSolver.SolveResult.MultipleSolutions:
                 return "This puzzle has multiple solutions.";
-            case PuzzleBoard.SolveResult.NoLogicSolution:
+            case PuzzleSolver.SolveResult.NoLogicSolution:
                 return "This puzzle has a unique solution, but can't be solved without guessing.";
-            case PuzzleBoard.SolveResult.EditorModeConflict:
+            case PuzzleSolver.SolveResult.EditorModeConflict:
                 return "Editor mode conflict.";
             default:
                 return null;
