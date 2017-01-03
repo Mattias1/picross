@@ -13,21 +13,17 @@ namespace Picross.Solvers
         public static PuzzleSolver.SolveResult Solve(Puzzle puzzle, Puzzle puzzleForNumbers, ThreadHelper threadHelper) {
             var solver = new LogicalSolver(puzzle, puzzleForNumbers, threadHelper);
 
-            bool result = solver.solveLogically(puzzle, puzzleForNumbers);
-
-            if (threadHelper.Cancelling)
-                return PuzzleSolver.SolveResult.Cancelled;
-
-            return result ? PuzzleSolver.SolveResult.UniqueOrLogicSolution : PuzzleSolver.SolveResult.NoSolutionFound;
+            return solver.solveLogically(puzzle, puzzleForNumbers);
         }
 
-        private bool solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {
-            loopAll(puzzle);
+        private PuzzleSolver.SolveResult solveLogically(Puzzle puzzle, Puzzle puzzleForNumbers) {
+            while (loopAll(puzzle)) ;
 
             if (this.ThreadHelper.Cancelling)
-                return false;
+                return PuzzleSolver.SolveResult.Cancelled;
 
-            return isSolved(puzzle, puzzleForNumbers);
+            bool result = isSolved(puzzle, puzzleForNumbers);
+            return result ? PuzzleSolver.SolveResult.UniqueOrLogicSolution : PuzzleSolver.SolveResult.NoSolutionFound;
         }
 
         private bool isSolved(Puzzle puzzle, Puzzle original) {
@@ -41,9 +37,7 @@ namespace Picross.Solvers
         }
 
 
-        // The following code acts like a state machine.
-        // Each method represents a state. The return value represents whether or not it found a change.
-        // We hop from state to state using recursion.
+        // Return whether or not a change is found.
         private bool loopAll(Puzzle puzzle) {
             if (this.ThreadHelper.Cancelling) return false;
 
@@ -57,13 +51,13 @@ namespace Picross.Solvers
         }
 
         private bool loopRows(Puzzle puzzle, Field search, Field opposite) {
-            return loopRows_Mirror(puzzle, search, opposite, this.Rows, false);
+            return loopRows_Mirror(puzzle, search, opposite, this.Rows, this.Cols, false);
         }
         private bool loopCols(Puzzle puzzle, Field search, Field opposite) {
-            return loopRows_Mirror(puzzle, search, opposite, this.Cols, true);
+            return loopCols_Mirror(puzzle, search, opposite, this.Rows, this.Cols, false);
         }
 
-        private bool loopRows_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, bool mirror) {
+        private bool loopRows_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, List<int>[] cols, bool mirror) {
             if (this.ThreadHelper.Cancelling)
                 return false;
 
@@ -71,11 +65,24 @@ namespace Picross.Solvers
                 FoundFields resultBlack = GetRow_Mirror(puzzle, search, opposite, y, rows[y], mirror);
                 if (resultBlack.FoundChange) {
                     FoundFields resultWhite = GetRow_Mirror(puzzle, opposite, search, y, rows[y], mirror);
-                    FoundFields merged = FoundFields.Merge(resultBlack, resultWhite);
-                    return loopAll(puzzle);
+                    FoundFields changes = FoundFields.Merge(resultBlack, resultWhite);
+
+                    loopChanges_Mirror(puzzle, changes, search, opposite, rows, cols, mirror);
+                    return true;
                 }
             }
             return false;
+        }
+        private bool loopCols_Mirror(Puzzle puzzle, Field search, Field opposite, List<int>[] rows, List<int>[] cols, bool mirror) {
+            return loopRows_Mirror(puzzle, search, opposite, cols, rows, !mirror);
+        }
+
+        private void loopChanges_Mirror(Puzzle puzzle, FoundFields changes, Field search, Field opposite, List<int>[] rows, List<int>[] cols, bool mirror) {
+            for (int x = 0; x < this.Puzzle.GetWidth(mirror); x++) {
+                if (changes[x]) {
+                    loopCols_Mirror(puzzle, search, opposite, rows, cols, mirror);
+                }
+            }
         }
 
 
