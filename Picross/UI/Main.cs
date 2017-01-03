@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Windows.Forms;
 using MattyControls;
 
 namespace Picross.UI
@@ -16,13 +17,29 @@ namespace Picross.UI
             // Set some standard values
             this.Text = "Picross";
 
+            // The status bar
+            this.UseStatusStrip();
+            var statusBarElements = new StatusBarElements(this.StatusStrip);
+
             // Add the controls
-            this.AddUserControl(new MainControl());
+            this.AddUserControl(new MainControl(statusBarElements));
             this.ShowUserControl<MainControl>();
         }
 
         public void LoadPuzzleFromFile(string filename) {
             this.GetUserControl<MainControl>().LoadPuzzleFromFile(filename);
+        }
+    }
+
+    class StatusBarElements
+    {
+        public MattyStatusStrip StatusStrip { get; private set; }
+
+        public ToolStripStatusLabel StatusLabel { get; set; }
+
+        public StatusBarElements(MattyStatusStrip statusStrip) {
+            this.StatusStrip = statusStrip;
+            this.StatusLabel = statusStrip.AddLabel(ToolStripItemDisplayStyle.Text);
         }
     }
 }

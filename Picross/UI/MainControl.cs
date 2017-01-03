@@ -17,9 +17,10 @@ namespace Picross.UI
         string fileName;
         Btn btnEditorMode, btnNewPuzzle, btnLoad, btnSave, btnSolve, btnCheck, btnClear, btnColorBlack, btnColorEmpty, btnMove, btnSize;
         Cb cbUseAutoBlanker, cbStrictChecking, cbDarkerBackground;
+        StatusBarElements statusBar;
         ThreadHelper threadHelper;
 
-        public MainControl() {
+        public MainControl(StatusBarElements statusBarElements) {
             // Set some members
             this.puzzleBoard = new PuzzleBoard(20, 15, Settings.Get.EditorMode);
             this.mouse = new Point(-1, -1);
@@ -34,6 +35,7 @@ namespace Picross.UI
             this.manageEvents();
 
             // Add the controls
+            this.statusBar = statusBarElements;
             this.addControls();
         }
 
@@ -237,7 +239,7 @@ namespace Picross.UI
                     this.fileName = Path.GetFileName(dialog.FileName);
                 }
                 catch {
-                    MessageBox.Show("There was an error saving the puzzle.", "Save", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    this.showMessage("There was an error saving the puzzle.", "Saving", MessageBoxIcon.Error);
                 }
             }
         }
@@ -262,13 +264,13 @@ namespace Picross.UI
         private void checkClick(object o, EventArgs e) {
             switch (this.puzzleBoard.Solver.Check(Settings.Get.StrictChecking)) {
             case PuzzleSolver.CheckResult.Mistake:
-                MessageBox.Show("You have one or more mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                this.showMessage("You have one or more mistakes.", "Checking", MessageBoxIcon.Exclamation);
                 break;
             case PuzzleSolver.CheckResult.AllRightSoFar:
-                MessageBox.Show("You have no mistakes.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.showMessage("You have no mistakes.", "Checking", MessageBoxIcon.Information);
                 break;
             case PuzzleSolver.CheckResult.Finished:
-                MessageBox.Show("You have solved the puzzle.", "Check", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.showMessage("You have solved the puzzle.", "Checking", MessageBoxIcon.Information);
                 break;
             }
         }
@@ -289,15 +291,15 @@ namespace Picross.UI
             this.threadHelper.Run(
                 this.puzzleBoard.Solver.Solve,
                 (PuzzleSolver.SolveResult result) => {
-                    string errorMessage = this.solveResultErrorMessage(result);
-                    if (!string.IsNullOrEmpty(errorMessage))
-                        MessageBox.Show(errorMessage, "Solve", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-
-                    if (this.puzzleBoard.EditorMode && result == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
-                        MessageBox.Show("This puzzle is valid.", "Solve", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                     if (!this.puzzleBoard.EditorMode)
                         this.Draw();
+
+                    string errorMessage = this.solveResultErrorMessage(result);
+                    if (!string.IsNullOrEmpty(errorMessage))
+                        this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation);
+
+                    if (this.puzzleBoard.EditorMode && result == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
+                        this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information);
 
                     this.Cursor = Cursors.Default;
                 },
@@ -349,7 +351,7 @@ namespace Picross.UI
 
         private bool changeColor(Btn btn, Field type, Color color) {
             if (!this.puzzleBoard.Painter.SetColor(type, color)) {
-                MessageBox.Show("This colour is already in use.", "Colour", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.showMessage("This colour is already in use.", "Colour", MessageBoxIcon.Warning);
                 return false;
             }
 
@@ -374,7 +376,7 @@ namespace Picross.UI
                 }
             }
             catch {
-                MessageBox.Show("There was an error loading the puzzle.", "Load", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.showMessage("There was an error loading the puzzle.", "Loading", MessageBoxIcon.Error);
                 return false;
             }
         }
@@ -439,6 +441,14 @@ namespace Picross.UI
                 ((Main)this.Parent).Text = "Picross";
             else
                 ((Main)this.Parent).Text = "Picross - " + Path.GetFileName(fullFileName);
+        }
+
+        private void showMessage(string message, string title, MessageBoxIcon icon) {
+            this.statusBar.StatusLabel.Text = $"{title}: {message}";
+            MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
+        }
+        private void clearMessage() {
+            this.statusBar.StatusLabel.Text = null;
         }
     }
 }
