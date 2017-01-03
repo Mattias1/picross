@@ -161,6 +161,8 @@ namespace Picross.UI
         }
 
         private void editorModeClick(object o, EventArgs e) {
+            this.clearMessage();
+
             bool editorMode = !this.puzzleBoard.EditorMode;
             this.puzzleBoard.EditorMode = editorMode;
             Settings.Get.EditorMode = editorMode;
@@ -176,6 +178,8 @@ namespace Picross.UI
         }
 
         private void newPuzzleClick(object o, EventArgs e) {
+            this.clearMessage();
+
             SizeDialog dialog = new SizeDialog("Create a new picross puzzle.");
             if (dialog.ShowDialog() == DialogResult.OK) {
                 this.puzzleBoard = new PuzzleBoard(dialog.ChosenSize.X, dialog.ChosenSize.Y, Settings.Get.EditorMode);
@@ -184,6 +188,8 @@ namespace Picross.UI
         }
 
         private void loadClick(object o, EventArgs e) {
+            this.clearMessage();
+
             // Create the open file dialog box
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Title = "Open puzzle";
@@ -205,6 +211,8 @@ namespace Picross.UI
         }
 
         private void saveClick(object o, EventArgs e) {
+            this.clearMessage();
+
             // Create the save file dialog box
             SaveFileDialog dialog = new SaveFileDialog();
             dialog.Title = "Save puzzle";
@@ -262,6 +270,8 @@ namespace Picross.UI
         }
 
         private void checkClick(object o, EventArgs e) {
+            this.clearMessage();
+
             switch (this.puzzleBoard.Solver.Check(Settings.Get.StrictChecking)) {
             case PuzzleSolver.CheckResult.Mistake:
                 this.showMessage("You have one or more mistakes.", "Checking", MessageBoxIcon.Exclamation);
@@ -281,6 +291,8 @@ namespace Picross.UI
         }
 
         private void solveClick(object o, EventArgs e) {
+            this.clearMessage();
+
             if (this.threadHelper.Running) {
                 this.threadHelper.Cancel();
                 return;
