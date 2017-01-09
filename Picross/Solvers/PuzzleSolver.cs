@@ -1,4 +1,6 @@
-﻿using Picross.Helpers;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using Picross.Helpers;
 using Picross.Model;
 
 namespace Picross.Solvers
@@ -18,12 +20,14 @@ namespace Picross.Solvers
         };
 
         private PuzzleBoard board;
+        private Stopwatch stopwatch;
 
         private Puzzle puzzle => board.Puzzle;
         private Puzzle backUpOriginalPuzzle => board.BackUpOriginalPuzzle;
 
         public PuzzleSolver(PuzzleBoard board) {
             this.board = board;
+            this.stopwatch = new Stopwatch();
         }
 
         public CheckResult Check(bool strict) {
@@ -47,10 +51,10 @@ namespace Picross.Solvers
             return finished ? CheckResult.Finished : CheckResult.AllRightSoFar;
         }
 
-        public SolveResult Solve(ThreadHelper threadHelper) {
+        public PuzzleSolverDto Solve(ThreadHelper threadHelper) {
             // Check if the original puzzle is not empty (if one accidentally started designing in play mode)
             if (!this.board.EditorMode && (this.backUpOriginalPuzzle == null || this.backUpOriginalPuzzle.IsEmpty())) {
-                return SolveResult.EditorModeConflict;
+                return new PuzzleSolverDto(SolveResult.EditorModeConflict);
             }
 
             // Solve or check for uniqueness
@@ -59,44 +63,81 @@ namespace Picross.Solvers
             return this.solvePlayMode(threadHelper);
         }
 
-        private SolveResult solveEditorMode(ThreadHelper threadHelper) {
+        private PuzzleSolverDto solveEditorMode(ThreadHelper threadHelper) {
+            var solveTimes = new List<long>();
+
             Puzzle solvePuzzle = this.puzzle.EmptyClone();
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
+                this.stopwatch.Start();
+
                 var logicResult = LogicalSolver.Solve(solvePuzzle, this.puzzle, threadHelper);
+                this.addTimeResult(solveTimes);
+
                 if (logicResult == SolveResult.UniqueOrLogicSolution)
-                    return logicResult;
+                    return new PuzzleSolverDto(logicResult, solveTimes);
             }
 
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyBacktracking)) {
+                this.stopwatch.Start();
+
                 var backtrackResult = Settings.Get.Solver == Settings.SolverSetting.Smart
                     ? BacktrackSolver.Solve(solvePuzzle, this.puzzle, threadHelper)
                     : BacktrackSolver.CheckUniqueness(solvePuzzle, threadHelper);
 
+                this.addTimeResult(solveTimes);
                 if (backtrackResult == SolveResult.UniqueOrLogicSolution && Settings.Get.Solver == Settings.SolverSetting.Smart)
-                    return SolveResult.NoLogicSolution;
+                    return new PuzzleSolverDto(SolveResult.NoLogicSolution, solveTimes);
 
-                return this.adjustNoSolutionResult(backtrackResult);
+                return this.adjustNoSolutionResult(backtrackResult, solveTimes);
             }
 
-            return this.adjustNoSolutionResult(SolveResult.NoSolutionFound);
+            return this.adjustNoSolutionResult(SolveResult.NoSolutionFound, solveTimes);
         }
 
-        private SolveResult adjustNoSolutionResult(SolveResult result) {
+        private PuzzleSolverDto adjustNoSolutionResult(SolveResult result, List<long> solveTimes) {
             if (Settings.Get.Solver == Settings.SolverSetting.Smart && result == SolveResult.NoSolutionFound)
-                return SolveResult.NoSolutionExists;
-            return result;
+                return new PuzzleSolverDto(SolveResult.NoSolutionExists, solveTimes);
+            return new PuzzleSolverDto(result, solveTimes);
         }
 
-        private SolveResult solvePlayMode(ThreadHelper threadHelper) {
+        private PuzzleSolverDto solvePlayMode(ThreadHelper threadHelper) {
             if (Settings.Get.Solver.IsOneOf(Settings.SolverSetting.Smart, Settings.SolverSetting.OnlyLogic)) {
-                return LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
+                this.stopwatch.Start();
+                var result = LogicalSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
+                return this.timeResult(result);
             }
 
             if (Settings.Get.Solver == Settings.SolverSetting.OnlyBacktracking) {
-                return BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
+                this.stopwatch.Start();
+                var result = BacktrackSolver.Solve(this.puzzle, this.backUpOriginalPuzzle, threadHelper);
+                return this.timeResult(result);
             }
 
-            return SolveResult.NoSolutionFound;
+            return new PuzzleSolverDto(SolveResult.NoSolutionFound);
+        }
+
+        private PuzzleSolverDto timeResult(SolveResult solverResult) {
+            long time = this.stopwatch.ElapsedMilliseconds;
+            this.stopwatch.Reset();
+            return new PuzzleSolverDto(solverResult, new List<long> { time });
+        }
+
+        private void addTimeResult(List<long> stopwatchTimes) {
+            stopwatchTimes.Add(this.stopwatch.ElapsedMilliseconds);
+            this.stopwatch.Reset();
+        }
+    }
+
+    struct PuzzleSolverDto
+    {
+        public PuzzleSolver.SolveResult SolveResult;
+        public List<long> ElapsedMilliseconds;
+
+        public PuzzleSolverDto(PuzzleSolver.SolveResult solveResult)
+            : this(solveResult, new List<long> { 0 }) { }
+        public PuzzleSolverDto(PuzzleSolver.SolveResult solveResult, List<long> elapsedMilliseconds) {
+            this.SolveResult = solveResult;
+            this.ElapsedMilliseconds = elapsedMilliseconds;
         }
     }
 }

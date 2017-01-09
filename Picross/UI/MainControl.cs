@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using MattyControls;
 using Picross.Model;
@@ -274,13 +276,13 @@ namespace Picross.UI
 
             switch (this.puzzleBoard.Solver.Check(Settings.Get.StrictChecking)) {
             case PuzzleSolver.CheckResult.Mistake:
-                this.showMessage("You have one or more mistakes.", "Checking", MessageBoxIcon.Exclamation);
+                this.showMessage("There are one or more mistakes.", "Checking", MessageBoxIcon.Exclamation);
                 break;
             case PuzzleSolver.CheckResult.AllRightSoFar:
-                this.showMessage("You have no mistakes.", "Checking", MessageBoxIcon.Information);
+                this.showMessage("There are no mistakes.", "Checking", MessageBoxIcon.Information);
                 break;
             case PuzzleSolver.CheckResult.Finished:
-                this.showMessage("You have solved the puzzle.", "Checking", MessageBoxIcon.Information);
+                this.showMessage("There are solved the puzzle.", "Checking", MessageBoxIcon.Information);
                 break;
             }
         }
@@ -302,16 +304,17 @@ namespace Picross.UI
 
             this.threadHelper.Run(
                 this.puzzleBoard.Solver.Solve,
-                (PuzzleSolver.SolveResult result) => {
+                (PuzzleSolverDto result) => {
                     if (!this.puzzleBoard.EditorMode)
                         this.Draw();
 
-                    string errorMessage = this.solveResultErrorMessage(result);
+                    string errorMessage = this.solveResultErrorMessage(result.SolveResult);
+                    string time = this.solveTimerMessage(result.ElapsedMilliseconds);
                     if (!string.IsNullOrEmpty(errorMessage))
-                        this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation);
+                        this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation, time);
 
-                    if (this.puzzleBoard.EditorMode && result == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
-                        this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information);
+                    if (this.puzzleBoard.EditorMode && result.SolveResult == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
+                        this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
 
                     this.Cursor = Cursors.Default;
                 },
@@ -336,6 +339,10 @@ namespace Picross.UI
             default:
                 return null;
             }
+        }
+
+        private string solveTimerMessage(List<long> elapsedMilliseconds) {
+            return $"({string.Join(", ", elapsedMilliseconds.Select(ms => $"{ms}ms"))})";
         }
 
         private void colorBtnMouseDown(object o, MouseEventArgs e) {
@@ -455,8 +462,10 @@ namespace Picross.UI
                 ((Main)this.Parent).Text = "Picross - " + Path.GetFileName(fullFileName);
         }
 
-        private void showMessage(string message, string title, MessageBoxIcon icon) {
+        private void showMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
             this.statusBar.StatusLabel.Text = $"{title}: {message}";
+            if (!string.IsNullOrEmpty(secondStatusMessage))
+                this.statusBar.StatusLabel.Text += $"    {secondStatusMessage}";
             MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
         }
         private void clearMessage() {
