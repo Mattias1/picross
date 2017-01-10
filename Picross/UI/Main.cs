@@ -22,7 +22,7 @@ namespace Picross.UI
             var statusBarElements = new StatusBarElements(this.StatusStrip);
 
             // Add the controls
-            this.AddUserControl(new MainControl(statusBarElements));
+            this.AddUserControl(new MainControl(statusBarElements), new SettingsControl());
             this.ShowUserControl<MainControl>();
         }
 

@@ -67,6 +67,9 @@
     <Compile Include="Model\Puzzle.cs" />
     <Compile Include="UI\PuzzlePainter.cs" />
     <Compile Include="Solvers\BacktrackSolver.cs" />
+    <Compile Include="UI\SettingsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="UI\SizeDialog.cs">
       <SubType>Form</SubType>
     </Compile>

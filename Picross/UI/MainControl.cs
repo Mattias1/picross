@@ -17,8 +17,7 @@ namespace Picross.UI
         Point mouse;
         bool mouseDown;
         string fileName;
-        Btn btnEditorMode, btnNewPuzzle, btnLoad, btnSave, btnSolve, btnCheck, btnClear, btnColorBlack, btnColorEmpty, btnMove, btnSize;
-        Cb cbUseAutoBlanker, cbStrictChecking, cbDarkerBackground;
+        Btn btnEditorMode, btnNewPuzzle, btnLoad, btnSave, btnSolve, btnCheck, btnClear, btnColorBlack, btnColorEmpty, btnMove, btnSize, btnSettings;
         StatusBarElements statusBar;
         ThreadHelper threadHelper;
 
@@ -136,30 +135,9 @@ namespace Picross.UI
                 this.btnSize.Hide();
             this.btnSize.Click += this.sizeClick;
 
-            // The autoblanker checkbox
-            this.cbUseAutoBlanker = new Cb("Autoblanker", this);
-            this.cbUseAutoBlanker.Size = new Size(this.btnSize.Width + 10, this.cbUseAutoBlanker.Height);
-            this.cbUseAutoBlanker.CheckedChanged += (o, e) => { Settings.Get.UseAutoBlanker = this.cbUseAutoBlanker.Checked; };
-            if (this.puzzleBoard.EditorMode)
-                this.cbUseAutoBlanker.Hide();
-            this.cbUseAutoBlanker.Checked = Settings.Get.UseAutoBlanker;
-
-            // The strictness checkbox
-            this.cbStrictChecking = new Cb("Strict check", this);
-            this.cbStrictChecking.Size = this.cbUseAutoBlanker.Size;
-            this.cbStrictChecking.CheckedChanged += (o, e) => { Settings.Get.StrictChecking = this.cbStrictChecking.Checked; };
-            if (this.puzzleBoard.EditorMode)
-                this.cbStrictChecking.Hide();
-            this.cbStrictChecking.Checked = Settings.Get.StrictChecking;
-
-            // The background colour checkbox
-            this.cbDarkerBackground = new Cb("Grey theme", this);
-            this.cbDarkerBackground.Size = this.cbStrictChecking.Size;
-            this.cbDarkerBackground.CheckedChanged += (o, e) => {
-                Settings.Get.DarkerBackground = this.cbDarkerBackground.Checked;
-                this.Draw();
-            };
-            this.cbDarkerBackground.Checked = Settings.Get.DarkerBackground;
+            // The settings button
+            this.btnSettings = new Btn("Settings", this);
+            this.btnSettings.Click += (o, e) => { this.ShowUserControl<SettingsControl>(); };
         }
 
         private void editorModeClick(object o, EventArgs e) {
@@ -173,8 +151,6 @@ namespace Picross.UI
             this.btnMove.Visible = editorMode;
             this.btnSize.Visible = editorMode;
             this.btnCheck.Visible = !editorMode;
-            this.cbUseAutoBlanker.Visible = !editorMode;
-            this.cbStrictChecking.Visible = !editorMode;
 
             this.OnResize();
         }
@@ -425,13 +401,15 @@ namespace Picross.UI
             this.btnColorBlack.PositionBelow(this.btnClear);
             this.btnColorEmpty.PositionRightOf(this.btnColorBlack, 5);
 
-            this.cbDarkerBackground.PositionBottomRightInside(this);
-            this.cbStrictChecking.PositionAbove(this.cbDarkerBackground);
-            this.cbUseAutoBlanker.PositionAbove(this.cbStrictChecking);
+            this.btnSettings.PositionBottomRightInside(this, 20);
 
             // The puzzle location and size
             this.puzzleBoard.Painter.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);
             this.Invalidate();
+        }
+
+        public override void OnShow() {
+            this.Draw();
         }
 
         // -- Helpers --
