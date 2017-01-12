@@ -38,6 +38,7 @@ namespace Picross.UI
             // Add the controls
             this.statusBar = statusBarElements;
             this.addControls();
+            this.clearMessage();
         }
 
         private void manageEvents() {
@@ -141,8 +142,6 @@ namespace Picross.UI
         }
 
         private void editorModeClick(object o, EventArgs e) {
-            this.clearMessage();
-
             bool editorMode = !this.puzzleBoard.EditorMode;
             this.puzzleBoard.EditorMode = editorMode;
             Settings.Get.EditorMode = editorMode;
@@ -153,6 +152,8 @@ namespace Picross.UI
             this.btnCheck.Visible = !editorMode;
 
             this.OnResize();
+
+            this.clearMessage();
         }
 
         private void newPuzzleClick(object o, EventArgs e) {
@@ -270,6 +271,7 @@ namespace Picross.UI
 
         private void solveClick(object o, EventArgs e) {
             this.clearMessage();
+            this.statusBar.StatusLabel.Text = "Solving...";
 
             if (this.threadHelper.Running) {
                 this.threadHelper.Cancel();
@@ -289,8 +291,12 @@ namespace Picross.UI
                     if (!string.IsNullOrEmpty(errorMessage))
                         this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation, time);
 
-                    if (this.puzzleBoard.EditorMode && result.SolveResult == PuzzleSolver.SolveResult.UniqueOrLogicSolution)
-                        this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
+                    if (result.SolveResult == PuzzleSolver.SolveResult.UniqueOrLogicSolution) {
+                        if (this.puzzleBoard.EditorMode)
+                            this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
+                        else
+                            this.showStatusbarMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
+                    }
 
                     this.Cursor = Cursors.Default;
                 },
@@ -440,14 +446,19 @@ namespace Picross.UI
                 ((Main)this.Parent).Text = "Picross - " + Path.GetFileName(fullFileName);
         }
 
-        private void showMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
+        private void showStatusbarMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
             this.statusBar.StatusLabel.Text = $"{title}: {message}";
             if (!string.IsNullOrEmpty(secondStatusMessage))
                 this.statusBar.StatusLabel.Text += $"    {secondStatusMessage}";
-            MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
+        }
+        private void showMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
+            this.showStatusbarMessage(message, title, icon, secondStatusMessage);
+
+            if (!Settings.Get.OnlyStatusBar)
+                MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
         }
         private void clearMessage() {
-            this.statusBar.StatusLabel.Text = null;
+            this.statusBar.StatusLabel.Text = this.puzzleBoard.EditorMode ? "Mode: Editor" : "Mode: Play";
         }
     }
 }

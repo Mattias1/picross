@@ -49,6 +49,14 @@ namespace Picross
         }
 
         /// <summary>
+        /// Whether or not to use only the status bar, or a status bar and messageboxes
+        /// </summary>
+        public bool OnlyStatusBar {
+            get { return this.get("onlystatusbar", false); }
+            set { this.set("onlystatusbar", value); }
+        }
+
+        /// <summary>
         /// Set a colour
         /// </summary>
         /// <param name="type"></param>
