@@ -291,6 +291,9 @@ namespace Picross.UI
                     if (!string.IsNullOrEmpty(errorMessage))
                         this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation, time);
 
+                    if (result.SolveResult == PuzzleSolver.SolveResult.Cancelled)
+                        this.showStatusbarMessage("Cancelled.", "Solving", MessageBoxIcon.None, time);
+
                     if (result.SolveResult == PuzzleSolver.SolveResult.UniqueOrLogicSolution) {
                         if (this.puzzleBoard.EditorMode)
                             this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
@@ -441,9 +444,9 @@ namespace Picross.UI
 
         private void updateTitleBar(string fullFileName = null) {
             if (string.IsNullOrEmpty(fullFileName))
-                ((Main)this.Parent).Text = "Picross";
+                this.ParentMattyForm.Text = "Picross";
             else
-                ((Main)this.Parent).Text = "Picross - " + Path.GetFileName(fullFileName);
+                this.ParentMattyForm.Text = "Picross - " + Path.GetFileName(fullFileName);
         }
 
         private void showStatusbarMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
@@ -451,12 +454,14 @@ namespace Picross.UI
             if (!string.IsNullOrEmpty(secondStatusMessage))
                 this.statusBar.StatusLabel.Text += $"    {secondStatusMessage}";
         }
+
         private void showMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
             this.showStatusbarMessage(message, title, icon, secondStatusMessage);
 
             if (!Settings.Get.OnlyStatusBar)
                 MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
         }
+
         private void clearMessage() {
             this.statusBar.StatusLabel.Text = this.puzzleBoard.EditorMode ? "Mode: Editor" : "Mode: Play";
         }
