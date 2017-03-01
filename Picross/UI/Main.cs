@@ -39,7 +39,7 @@ namespace Picross.UI
 
         public StatusBarElements(MattyStatusStrip statusStrip) {
             this.StatusStrip = statusStrip;
-            this.StatusLabel = statusStrip.AddLabel(ToolStripItemDisplayStyle.Text);
+            this.StatusLabel = statusStrip.AddLabel(ToolStripItemDisplayStyle.ImageAndText);
         }
     }
 }

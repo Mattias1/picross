@@ -226,7 +226,7 @@ namespace Picross.UI
                     this.fileName = Path.GetFileName(dialog.FileName);
                 }
                 catch {
-                    this.showMessage("There was an error saving the puzzle.", "Saving", MessageBoxIcon.Error);
+                    this.showMessage("There was an error saving the puzzle.", "Saving", StatusIcon.Error);
                 }
             }
         }
@@ -253,13 +253,13 @@ namespace Picross.UI
 
             switch (this.puzzleBoard.Solver.Check(Settings.Get.StrictChecking)) {
             case PuzzleSolver.CheckResult.Mistake:
-                this.showMessage("There are one or more mistakes.", "Checking", MessageBoxIcon.Exclamation);
+                this.showMessage("There are one or more mistakes.", "Checking", StatusIcon.Warning);
                 break;
             case PuzzleSolver.CheckResult.AllRightSoFar:
-                this.showMessage("There are no mistakes.", "Checking", MessageBoxIcon.Information);
+                this.showMessage("There are no mistakes.", "Checking", StatusIcon.Success);
                 break;
             case PuzzleSolver.CheckResult.Finished:
-                this.showMessage("There are solved the puzzle.", "Checking", MessageBoxIcon.Information);
+                this.showMessage("There are solved the puzzle.", "Checking", StatusIcon.Success);
                 break;
             }
         }
@@ -289,16 +289,16 @@ namespace Picross.UI
                     string errorMessage = this.solveResultErrorMessage(result.SolveResult);
                     string time = this.solveTimerMessage(result.ElapsedMilliseconds);
                     if (!string.IsNullOrEmpty(errorMessage))
-                        this.showMessage(errorMessage, "Solving", MessageBoxIcon.Exclamation, time);
+                        this.showMessage(errorMessage, "Solving", StatusIcon.Warning, time);
 
                     if (result.SolveResult == PuzzleSolver.SolveResult.Cancelled)
-                        this.showStatusbarMessage("Cancelled.", "Solving", MessageBoxIcon.None, time);
+                        this.showStatusbarMessage("Cancelled.", "Solving", StatusIcon.None, time);
 
                     if (result.SolveResult == PuzzleSolver.SolveResult.UniqueOrLogicSolution) {
                         if (this.puzzleBoard.EditorMode)
-                            this.showMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
+                            this.showMessage("This puzzle is valid.", "Solving", StatusIcon.Success, time);
                         else
-                            this.showStatusbarMessage("This puzzle is valid.", "Solving", MessageBoxIcon.Information, time);
+                            this.showStatusbarMessage("This puzzle is valid.", "Solving", StatusIcon.Success, time);
                     }
 
                     this.Cursor = Cursors.Default;
@@ -355,7 +355,7 @@ namespace Picross.UI
 
         private bool changeColor(Btn btn, Field type, Color color) {
             if (!this.puzzleBoard.Painter.SetColor(type, color)) {
-                this.showMessage("This colour is already in use.", "Colour", MessageBoxIcon.Warning);
+                this.showMessage("This colour is already in use.", "Colour", StatusIcon.Warning);
                 return false;
             }
 
@@ -380,7 +380,7 @@ namespace Picross.UI
                 }
             }
             catch {
-                this.showMessage("There was an error loading the puzzle.", "Loading", MessageBoxIcon.Error);
+                this.showMessage("There was an error loading the puzzle.", "Loading", StatusIcon.Error);
                 return false;
             }
         }
@@ -449,21 +449,23 @@ namespace Picross.UI
                 this.ParentMattyForm.Text = "Picross - " + Path.GetFileName(fullFileName);
         }
 
-        private void showStatusbarMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
+        private void showStatusbarMessage(string message, string title, StatusIcon icon, string secondStatusMessage = null) {
             this.statusBar.StatusLabel.Text = $"{title}: {message}";
+            this.statusBar.StatusLabel.Image = icon.ToBitmap();
             if (!string.IsNullOrEmpty(secondStatusMessage))
                 this.statusBar.StatusLabel.Text += $"    {secondStatusMessage}";
         }
 
-        private void showMessage(string message, string title, MessageBoxIcon icon, string secondStatusMessage = null) {
+        private void showMessage(string message, string title, StatusIcon icon, string secondStatusMessage = null) {
             this.showStatusbarMessage(message, title, icon, secondStatusMessage);
 
             if (!Settings.Get.OnlyStatusBar)
-                MessageBox.Show(message, title, MessageBoxButtons.OK, icon);
+                MessageBox.Show(message, title, MessageBoxButtons.OK, icon.ToMessageBoxIcon());
         }
 
         private void clearMessage() {
             this.statusBar.StatusLabel.Text = this.puzzleBoard.EditorMode ? "Mode: Editor" : "Mode: Play";
+            this.statusBar.StatusLabel.Image = null;
         }
     }
 }
