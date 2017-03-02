@@ -6,8 +6,8 @@ namespace Picross.UI
 {
     class Main : MattyForm
     {
-        private static Size MinSize = new Size(665, 435);
-        private static Size StartSize = new Size(888, 600);
+        private static Size MinSize = new Size(650, 470);
+        private static Size StartSize = new Size(888, 625);
 
         public Main() : base(MinSize, StartSize, Settings.Get) {
             // Load and apply the settings
