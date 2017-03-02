@@ -411,6 +411,7 @@ namespace Picross.UI
             this.btnColorEmpty.PositionRightOf(this.btnColorBlack, 5);
 
             this.btnSettings.PositionBottomRightInside(this, 20);
+            this.btnSettings.MoveDown(10);
 
             // The puzzle location and size
             this.puzzleBoard.Painter.Size = new Point(this.btnNewPuzzle.Location.X - 30, this.ClientSize.Height - 20);

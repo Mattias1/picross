@@ -4,7 +4,7 @@ namespace Picross.UI
 {
     class SettingsControl : MattyUserControl
     {
-        Btn btnOk, btnCancel;
+        Btn btnOk, btnCancel, btnReset;
         Cb cbUseAutoBlanker, cbStrictChecking, cbDarkerBackground, cbOnlyStatusBar;
 
         public SettingsControl() {
@@ -18,6 +18,9 @@ namespace Picross.UI
 
             this.btnCancel = new Btn("Cancel", this);
             this.btnCancel.Click += (o, e) => { this.ShowLastVisitedUserControl(); };
+
+            this.btnReset = new Btn("Reset", this);
+            this.btnReset.Click += (o, e) => { this.resetDefaults(); };
         }
 
         private void addSettings() {
@@ -31,6 +34,8 @@ namespace Picross.UI
             this.btnCancel.PositionBottomRightInside(this);
             this.btnOk.PositionLeftOf(this.btnCancel);
 
+            this.btnReset.PositionBottomLeftInside(this);
+
             this.cbUseAutoBlanker.PositionTopLeftInside(this);
             this.cbStrictChecking.PositionBelow(this.cbUseAutoBlanker);
             this.cbDarkerBackground.PositionBelow(this.cbStrictChecking);
@@ -43,10 +48,14 @@ namespace Picross.UI
         }
 
         public override void OnShow() {
-            this.cbUseAutoBlanker.Checked = Settings.Get.UseAutoBlanker;
-            this.cbStrictChecking.Checked = Settings.Get.StrictChecking;
-            this.cbDarkerBackground.Checked = Settings.Get.DarkerBackground;
-            this.cbOnlyStatusBar.Checked = Settings.Get.OnlyStatusBar;
+            this.initSettings(Settings.Get);
+        }
+
+        private void initSettings(Settings settings) {
+            this.cbUseAutoBlanker.Checked = settings.UseAutoBlanker;
+            this.cbStrictChecking.Checked = settings.StrictChecking;
+            this.cbDarkerBackground.Checked = settings.DarkerBackground;
+            this.cbOnlyStatusBar.Checked = settings.OnlyStatusBar;
         }
 
         private void saveAndGoBack() {
@@ -56,6 +65,10 @@ namespace Picross.UI
             Settings.Get.OnlyStatusBar = this.cbOnlyStatusBar.Checked;
 
             this.ShowLastVisitedUserControl();
+        }
+
+        private void resetDefaults() {
+            this.initSettings(new Settings());
         }
     }
 }
