@@ -76,8 +76,8 @@ namespace Picross.UI
         }
         public void Draw(Graphics graphics, Point mouse, Field selectedColour) {
             // Draw it to a bitmap
-            int squareSize;
-            adjustToNumberSizes(out squareSize);
+            adjustToNumberSizes();
+            int squareSize = this.CalculateSquareSize();
 
             Point hover = PuzzleBoard.Mouse2Point(mouse, squareSize, this);
             Bitmap bmp = this.drawToBitmap(squareSize, hover, selectedColour, true, Settings.Get.DarkerBackground);
@@ -94,7 +94,7 @@ namespace Picross.UI
             return (this.Size.X - this.InnerOffset.X) / this.puzzle.Width;
         }
 
-        private bool adjustToNumberSizes(out int squareSize) {
+        private bool adjustToNumberSizes() {
             bool needsResizing = false;
 
             // Update InnerOffset width
@@ -117,9 +117,9 @@ namespace Picross.UI
             }
 
             // Update the Size and squaresize
-            if (needsResizing)
+            if (needsResizing) {
                 this.Size = this.maxSize;
-            squareSize = this.CalculateSquareSize();
+            }
 
             return needsResizing;
         }
@@ -166,14 +166,14 @@ namespace Picross.UI
             if (fillSquares) {
                 for (int y = 0; y < this.puzzle.Height; y++)
                     for (int x = 0; x < this.puzzle.Width; x++)
-                        g.FillRectangle(this.getBrush(this.puzzle[x, y], darkerBackground), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+                        this.fillRectangle(g, this.getBrushColor(this.puzzle[x, y], darkerBackground), this.InnerOffset, squareSize, x, y);
             }
         }
 
         private void drawHover(int squareSize, Point hover, Field selectedColour, Graphics g) {
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = MathHelper.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
-                g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
+                this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, hover.X, hover.Y);
             }
         }
 
@@ -190,7 +190,7 @@ namespace Picross.UI
                 bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
                 for (int y = 0; y < autoblanks.Length; y++) {
                     if (autoblanks[y])
-                        g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * hover.X, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+                        this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, hover.X, y);
                 }
             }
 
@@ -198,7 +198,7 @@ namespace Picross.UI
                 bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
                 for (int x = 0; x < autoblanks.Length; x++) {
                     if (autoblanks[x])
-                        g.FillRectangle(new SolidBrush(hoverColor), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * hover.Y, squareSize, squareSize);
+                        this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, x, hover.Y);
                 }
             }
         }
@@ -229,16 +229,20 @@ namespace Picross.UI
                 for (int y = 0; y < this.puzzle.Height; y++) {
                     for (int x = 0; x < this.puzzle.Width; x++)
                         if (this.puzzle[x, y] == Field.Black || this.puzzle[x, y] == Field.Red)
-                            g.FillRectangle(new SolidBrush(Color.Black), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
+                            this.fillRectangle(g, Color.Black, offset, squareSize, x, y);
                 }
             }
         }
 
-        private Brush getBrush(Field type, bool darkerBackground) {
+        private void fillRectangle(Graphics g, Color color, Point offset, int squareSize, int x, int y) {
+            g.FillRectangle(new SolidBrush(color), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
+        }
+
+        private Color getBrushColor(Field type, bool darkerBackground) {
             // Get the brush with the right colour (used for drawing squares)
             if (darkerBackground && type == Field.Unknown)
-                return Brushes.LightGray;
-            return new SolidBrush(this.GetColor(type));
+                return Color.LightGray;
+            return this.GetColor(type);
         }
 
         private Pen getPen(int i, int last) {
