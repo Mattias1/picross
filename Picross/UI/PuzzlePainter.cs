@@ -28,7 +28,9 @@ namespace Picross.UI
             get { return this.size; }
             set {
                 this.maxSize = value;
-                int squareSize = Math.Max(MINIMUM_SQUARE_SIZE, Math.Min((value.X - this.InnerOffset.X) / this.puzzle.Width, (value.Y - this.InnerOffset.Y) / this.puzzle.Height));
+                int maxSquareWidth = (value.X - this.InnerOffset.X) / this.puzzle.Width;
+                int maxSquareHeight = (value.Y - this.InnerOffset.Y) / this.puzzle.Height;
+                int squareSize = Math.Max(MINIMUM_SQUARE_SIZE, Math.Min(maxSquareWidth, maxSquareHeight));
                 this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width, this.InnerOffset.Y + squareSize * this.puzzle.Height);
             }
         }
@@ -39,7 +41,7 @@ namespace Picross.UI
 
             this.Offset = new Point(10, 10);
             this.InnerOffset = new Point(120, 100);
-            this.Size = new Point(20 * this.puzzle.Width, 20 * this.puzzle.Height);
+            this.Size = new Point(20 * this.puzzle.Width, 20 * this.puzzle.Height); // Dummy size
 
             Settings s = Settings.Get;
             this.colors = new Color[5] {
@@ -63,7 +65,7 @@ namespace Picross.UI
 
         public Field GetType(Color color) {
             foreach (Field f in Field.All) {
-                Color c = this.colors[f.Index];
+                Color c = this.GetColor(f);
                 if (c.R == color.R && c.G == color.G && c.B == color.B)
                     return f;
             }
@@ -71,9 +73,10 @@ namespace Picross.UI
             return Field.Unknown;
         }
 
-        public void Draw(Graphics graphics, Point mouse) {
-            this.Draw(graphics, mouse, Field.Black);
+        public int CalculateSquareSize() {
+            return (this.size.X - this.InnerOffset.X) / this.puzzle.Width;
         }
+
         public void Draw(Graphics graphics, Point mouse, Field selectedColour) {
             // Draw it to a bitmap
             adjustToNumberSizes();
@@ -84,14 +87,6 @@ namespace Picross.UI
 
             // Draw that bitmap to form
             graphics.DrawImage(bmp, this.Offset);
-        }
-
-        public Bitmap ToBitmap(bool solution) {
-            return this.drawToBitmap(32, new Point(-1, -1), Field.Black, solution);
-        }
-
-        public int CalculateSquareSize() {
-            return (this.Size.X - this.InnerOffset.X) / this.puzzle.Width;
         }
 
         private bool adjustToNumberSizes() {
@@ -122,6 +117,10 @@ namespace Picross.UI
             }
 
             return needsResizing;
+        }
+
+        public Bitmap ToBitmap(bool solution) {
+            return this.drawToBitmap(32, new Point(-1, -1), Field.Black, solution);
         }
 
         private Bitmap drawToBitmap(int squareSize, Point hover, Field selectedColour, bool fillSquares = true, bool darkerBackground = false) {
@@ -166,14 +165,14 @@ namespace Picross.UI
             if (fillSquares) {
                 for (int y = 0; y < this.puzzle.Height; y++)
                     for (int x = 0; x < this.puzzle.Width; x++)
-                        this.fillRectangle(g, this.getBrushColor(this.puzzle[x, y], darkerBackground), this.InnerOffset, squareSize, x, y);
+                        this.fillRectangle(g, this.getBrushColor(this.puzzle[x, y], darkerBackground), squareSize, x, y);
             }
         }
 
         private void drawHover(int squareSize, Point hover, Field selectedColour, Graphics g) {
             if (this.puzzle.IsInRange(hover)) {
                 Color hoverColor = MathHelper.Lerp(this.GetColor(selectedColour), Color.White, 0.5f);
-                this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, hover.X, hover.Y);
+                this.fillRectangle(g, hoverColor, squareSize, hover.X, hover.Y);
             }
         }
 
@@ -190,7 +189,7 @@ namespace Picross.UI
                 bool[] autoblanks = AutoBlanker.GetCol(this.puzzle, this.puzzleForNumbers, hover.X);
                 for (int y = 0; y < autoblanks.Length; y++) {
                     if (autoblanks[y])
-                        this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, hover.X, y);
+                        this.fillRectangle(g, hoverColor, squareSize, hover.X, y);
                 }
             }
 
@@ -198,24 +197,17 @@ namespace Picross.UI
                 bool[] autoblanks = AutoBlanker.GetRow(this.puzzle, this.puzzleForNumbers, hover.Y);
                 for (int x = 0; x < autoblanks.Length; x++) {
                     if (autoblanks[x])
-                        this.fillRectangle(g, hoverColor, this.InnerOffset, squareSize, x, hover.Y);
+                        this.fillRectangle(g, hoverColor, squareSize, x, hover.Y);
                 }
             }
         }
 
         private void drawLines(int squareSize, Bitmap bmp, Graphics g) {
-            // Draw the horizontal and vertical lines
+            // Draw the lines seperating (and enclosing) the fields
             for (int y = 0; y < this.puzzle.Height + 1; y++)
-                g.DrawLine(this.getPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
+                drawVerticalLine(g, bmp, squareSize, y);
             for (int x = 0; x < this.puzzle.Width + 1; x++)
-                g.DrawLine(this.getPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
-
-            // Override grey lines
-            for (int y = 0; y < this.puzzle.Height; y += 5)
-                g.DrawLine(this.getPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
-            for (int x = 0; x < this.puzzle.Width; x += 5)
-                g.DrawLine(this.getPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
-            g.DrawLine(this.getPen(this.puzzle.Height, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * this.puzzle.Height, bmp.Width - 1, this.InnerOffset.Y + squareSize * this.puzzle.Height);
+                drawHorizontalLine(g, bmp, squareSize, x);
 
             // Draw the lines to close the number boxes
             g.DrawLine(this.getPen(0, 0), 1, this.InnerOffset.Y, 1, bmp.Height - 1);
@@ -229,13 +221,21 @@ namespace Picross.UI
                 for (int y = 0; y < this.puzzle.Height; y++) {
                     for (int x = 0; x < this.puzzle.Width; x++)
                         if (this.puzzle[x, y] == Field.Black || this.puzzle[x, y] == Field.Red)
-                            this.fillRectangle(g, Color.Black, offset, squareSize, x, y);
+                            this.fillRectangle(g, Color.Black, squareSize, x, y);
                 }
             }
         }
 
-        private void fillRectangle(Graphics g, Color color, Point offset, int squareSize, int x, int y) {
-            g.FillRectangle(new SolidBrush(color), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
+        private void fillRectangle(Graphics g, Color color, int squareSize, int x, int y) {
+            g.FillRectangle(new SolidBrush(color), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+        }
+
+        private void drawVerticalLine(Graphics g, Bitmap bmp, int squareSize, int y) {
+            g.DrawLine(this.getPen(y, this.puzzle.Height), 1, this.InnerOffset.Y + squareSize * y, bmp.Width - 1, this.InnerOffset.Y + squareSize * y);
+        }
+
+        private void drawHorizontalLine(Graphics g, Bitmap bmp, int squareSize, int x) {
+            g.DrawLine(this.getPen(x, this.puzzle.Width), this.InnerOffset.X + squareSize * x, 1, this.InnerOffset.X + squareSize * x, bmp.Height - 1);
         }
 
         private Color getBrushColor(Field type, bool darkerBackground) {

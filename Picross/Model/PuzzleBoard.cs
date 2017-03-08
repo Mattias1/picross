@@ -85,7 +85,7 @@ namespace Picross.Model
             if (lastMouse.X == nextMouse.X && lastMouse.Y == nextMouse.Y)
                 return 0;
             // Check if both mouse coordinates map to the same point, if not, the mouse moved significantly.
-            int squareSize = (this.Painter.Size.X - this.Painter.InnerOffset.X) / this.Puzzle.Width;
+            int squareSize = this.Painter.CalculateSquareSize();
             Point a = this.Mouse2Point(lastMouse, squareSize);
             Point b = this.Mouse2Point(nextMouse, squareSize);
             // Figure out how they moved

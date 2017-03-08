@@ -43,7 +43,7 @@ namespace Picross.UI
 
         private void manageEvents() {
             // The paint event
-            this.Paint += (o, e) => { this.puzzleBoard.Painter.Draw(e.Graphics, this.mouse); };
+            this.Paint += (o, e) => { this.puzzleBoard.Painter.Draw(e.Graphics, this.mouse, this.getSelectedColour()); };
 
             // The mouse events
             this.MouseClick += (o, e) => {
@@ -387,13 +387,12 @@ namespace Picross.UI
 
         public void Draw() {
             // Draw the puzzle, and check if the innerOffset is changed
-            Field selectedColour = this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black) ? Field.Black : Field.Red;
-            Point innerOffset = this.puzzleBoard.Painter.InnerOffset;
+            Point oldInnerOffset = this.puzzleBoard.Painter.InnerOffset;
 
-            this.puzzleBoard.Painter.Draw(this.CreateGraphics(), this.mouse, selectedColour);
+            this.puzzleBoard.Painter.Draw(this.CreateGraphics(), this.mouse, this.getSelectedColour());
 
-            if (innerOffset != this.puzzleBoard.Painter.InnerOffset)
-                this.OnResize();
+            if (oldInnerOffset != this.puzzleBoard.Painter.InnerOffset)
+                this.OnResize(); // This adjusts the board size, and invalidates the window
         }
 
         public override void OnResize() {
@@ -423,6 +422,10 @@ namespace Picross.UI
         }
 
         // -- Helpers --
+        private Field getSelectedColour() {
+            return this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black) ? Field.Black : Field.Red;
+        }
+
         private Field mouseButton2Type(MouseButtons buttons) {
             if (buttons == MouseButtons.Left) {
                 if (this.btnColorBlack.BackColor == this.puzzleBoard.Painter.GetColor(Field.Black))
