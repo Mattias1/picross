@@ -9,8 +9,6 @@ namespace Picross.UI
 {
     class PuzzlePainter
     {
-        private const int MINIMUM_SQUARE_SIZE = 5;
-
         private PuzzleBoard board;
 
         private Puzzle puzzle => board.Puzzle;
@@ -19,20 +17,33 @@ namespace Picross.UI
         private Color[] colors;
         private Font numberFont;
 
+        private Point minInnerOffset;
+        private Point maxSize;
+        private Point size;
+
         public Point Offset;
         public Point InnerOffset { get; set; }
-        private Point size;
-        private Point maxSize;
-
         public Point Size {
             get { return this.size; }
             set {
                 this.maxSize = value;
-                int maxSquareWidth = (value.X - this.InnerOffset.X) / this.puzzle.Width;
-                int maxSquareHeight = (value.Y - this.InnerOffset.Y) / this.puzzle.Height;
-                int squareSize = Math.Max(MINIMUM_SQUARE_SIZE, Math.Min(maxSquareWidth, maxSquareHeight));
-                this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width, this.InnerOffset.Y + squareSize * this.puzzle.Height);
+                this.calculateSizeAndInnerOffset();
             }
+        }
+
+        private void calculateSizeAndInnerOffset() {
+            const int MiN_SQUARE_SIZE = 5;
+            const int MAX_EXTRA_SPACE = 20;
+
+            int maxSquareWidth = (this.maxSize.X - this.minInnerOffset.X) / this.puzzle.Width;
+            int maxSquareHeight = (this.maxSize.Y - this.minInnerOffset.Y) / this.puzzle.Height;
+            int squareSize = Math.Max(MiN_SQUARE_SIZE, Math.Min(maxSquareWidth, maxSquareHeight));
+
+            int extraWidth = Math.Min(MAX_EXTRA_SPACE, this.maxSize.X - this.minInnerOffset.X - this.puzzle.Width * squareSize);
+            int extraHeight = Math.Min(MAX_EXTRA_SPACE, this.maxSize.Y - this.minInnerOffset.Y - this.puzzle.Height * squareSize);
+            this.InnerOffset = new Point(this.minInnerOffset.X + extraWidth, this.minInnerOffset.Y + extraHeight);
+
+            this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
         }
 
         public PuzzlePainter(PuzzleBoard board) {
@@ -40,7 +51,7 @@ namespace Picross.UI
             this.board = board;
 
             this.Offset = new Point(10, 10);
-            this.InnerOffset = new Point(120, 100);
+            this.minInnerOffset = new Point(120, 100);
             this.Size = new Point(20 * this.puzzle.Width, 20 * this.puzzle.Height); // Dummy size
 
             Settings s = Settings.Get;
@@ -92,28 +103,28 @@ namespace Picross.UI
         private bool adjustToNumberSizes() {
             bool needsResizing = false;
 
-            // Update InnerOffset width
+            // Update minimum InnerOffset width
             for (int y = 0; y < this.puzzle.Height; y++) {
                 string nrs = this.puzzleForNumbers.GetRowNumbers(y);
                 int nrsWidth = TextRenderer.MeasureText(nrs, this.numberFont).Width;
-                if (nrsWidth > this.InnerOffset.X) {
-                    this.InnerOffset = new Point(nrsWidth + 6, this.InnerOffset.Y);
+                if (nrsWidth > this.minInnerOffset.X) {
+                    this.minInnerOffset = new Point(nrsWidth + 6, this.minInnerOffset.Y);
                     needsResizing = true;
                 }
             }
-            // Update InnerOffset height
+            // Update minimum InnerOffset height
             for (int x = 0; x < this.puzzle.Width; x++) {
                 string nrs = this.puzzleForNumbers.GetColNumbers(x);
                 int nrsHeight = TextRenderer.MeasureText(nrs, this.numberFont).Height;
-                if (nrsHeight > this.InnerOffset.Y) {
-                    this.InnerOffset = new Point(this.InnerOffset.X, nrsHeight + 8);
+                if (nrsHeight > this.minInnerOffset.Y) {
+                    this.minInnerOffset = new Point(this.minInnerOffset.X, nrsHeight + 8);
                     needsResizing = true;
                 }
             }
 
             // Update the Size and squaresize
             if (needsResizing) {
-                this.Size = this.maxSize;
+                this.calculateSizeAndInnerOffset();
             }
 
             return needsResizing;
@@ -139,7 +150,7 @@ namespace Picross.UI
         }
 
         private Bitmap initBitmap(int squareSize, bool darkerBackground, out Graphics g) {
-            Bitmap bmp = new Bitmap(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
+            Bitmap bmp = new Bitmap(this.size.X, this.size.Y);
             g = Graphics.FromImage(bmp);
 
             g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Field.Unknown));
