@@ -259,7 +259,7 @@ namespace Picross.UI
                 this.showMessage("There are no mistakes.", "Checking", StatusIcon.Success);
                 break;
             case PuzzleSolver.CheckResult.Finished:
-                this.showMessage("There are solved the puzzle.", "Checking", StatusIcon.Success);
+                this.showMessage("You have solved the puzzle.", "Checking", StatusIcon.Success);
                 break;
             }
         }
