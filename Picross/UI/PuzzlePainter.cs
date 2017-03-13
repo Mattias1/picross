@@ -232,13 +232,14 @@ namespace Picross.UI
                 for (int y = 0; y < this.puzzle.Height; y++) {
                     for (int x = 0; x < this.puzzle.Width; x++)
                         if (this.puzzle[x, y] == Field.Black || this.puzzle[x, y] == Field.Red)
-                            this.fillRectangle(g, Color.Black, squareSize, x, y);
+                            this.fillRectangle(g, Color.Black, squareSize, x, y, offset);
                 }
             }
         }
 
-        private void fillRectangle(Graphics g, Color color, int squareSize, int x, int y) {
-            g.FillRectangle(new SolidBrush(color), this.InnerOffset.X + squareSize * x, this.InnerOffset.Y + squareSize * y, squareSize, squareSize);
+        private void fillRectangle(Graphics g, Color color, int squareSize, int x, int y, Point? innerOffset = null) {
+            Point offset = innerOffset ?? this.InnerOffset;
+            g.FillRectangle(new SolidBrush(color), offset.X + squareSize * x, offset.Y + squareSize * y, squareSize, squareSize);
         }
 
         private void drawVerticalLine(Graphics g, Bitmap bmp, int squareSize, int y) {
