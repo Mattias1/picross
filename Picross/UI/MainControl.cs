@@ -468,8 +468,7 @@ namespace Picross.UI
         }
 
         private void clearMessage() {
-            this.statusBar.StatusLabel.Text = this.puzzleBoard.EditorMode ? "Mode: Editor" : "Mode: Play";
-            this.statusBar.StatusLabel.Image = null;
+            this.showStatusbarMessage(this.puzzleBoard.EditorMode ? "Editor" : "Play", "Mode", StatusIcon.None);
         }
     }
 }
