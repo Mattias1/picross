@@ -220,6 +220,12 @@ namespace Picross.UI
             for (int x = 0; x < this.puzzle.Width + 1; x++)
                 drawHorizontalLine(g, bmp, squareSize, x);
 
+            // Draw the black lines (over  the grey ones)
+            for (int y = 0; y < this.puzzle.Height + 1; y += 5)
+                drawVerticalLine(g, bmp, squareSize, y);
+            for (int x = 0; x < this.puzzle.Width + 1; x += 5)
+                drawHorizontalLine(g, bmp, squareSize, x);
+
             // Draw the lines to close the number boxes
             g.DrawLine(this.getPen(0, 0), 1, this.InnerOffset.Y, 1, bmp.Height - 1);
             g.DrawLine(this.getPen(0, 0), this.InnerOffset.X, 1, bmp.Width - 1, 1);
