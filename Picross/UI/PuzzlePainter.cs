@@ -43,7 +43,10 @@ namespace Picross.UI
             int extraHeight = Math.Min(MAX_EXTRA_SPACE, this.maxSize.Y - this.minInnerOffset.Y - this.puzzle.Height * squareSize);
             this.InnerOffset = new Point(this.minInnerOffset.X + extraWidth, this.minInnerOffset.Y + extraHeight);
 
-            this.size = new Point(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
+            this.size = calculateSize(squareSize);
+        }
+        private Point calculateSize(int squareSize) {
+            return new Point(this.InnerOffset.X + squareSize * this.puzzle.Width + 1, this.InnerOffset.Y + squareSize * this.puzzle.Height + 1);
         }
 
         public PuzzlePainter(PuzzleBoard board) {
@@ -150,7 +153,8 @@ namespace Picross.UI
         }
 
         private Bitmap initBitmap(int squareSize, bool darkerBackground, out Graphics g) {
-            Bitmap bmp = new Bitmap(this.size.X, this.size.Y);
+            Point bitmapSize = calculateSize(squareSize);
+            Bitmap bmp = new Bitmap(bitmapSize.X, bitmapSize.Y);
             g = Graphics.FromImage(bmp);
 
             g.Clear(darkerBackground ? Color.LightGray : this.GetColor(Field.Unknown));
