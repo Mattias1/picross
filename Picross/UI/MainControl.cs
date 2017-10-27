@@ -84,37 +84,22 @@ namespace Picross.UI
 
         // -- Buttons --
         private void addControls() {
-            // Switch editor and play mode
-            this.btnEditorMode = new Btn(Settings.Get.EditorMode ? "Mode: editor" : "Mode: play", this);
-            this.btnEditorMode.Click += this.editorModeClick;
+            this.btnEditorMode = new Btn(Settings.Get.EditorMode ? "Mode: editor" : "Mode: play", this, this.editorModeClick);
 
-            // Create a new puzzle
-            this.btnNewPuzzle = new Btn("New puzzle", this);
-            this.btnNewPuzzle.Click += this.newPuzzleClick;
+            this.btnNewPuzzle = new Btn("New puzzle", this, this.newPuzzleClick);
 
-            // Load a puzzle
-            this.btnLoad = new Btn("Load", this);
-            this.btnLoad.Click += this.loadClick;
+            this.btnLoad = new Btn("Load", this, this.loadClick);
 
-            // Save a puzzle
-            this.btnSave = new Btn("Save", this);
-            this.btnSave.Click += this.saveClick;
+            this.btnSave = new Btn("Save", this, this.saveClick);
 
-            // Solve the puzzle
-            this.btnSolve = new Btn("Solve", this);
-            this.btnSolve.Click += this.solveClick;
+            this.btnSolve = new Btn("Solve", this, this.solveClick);
 
-            // Check if you have no mistakes so far
-            this.btnCheck = new Btn("Check", this);
+            this.btnCheck = new Btn("Check", this, this.checkClick);
             if (this.puzzleBoard.EditorMode)
                 this.btnCheck.Hide();
-            this.btnCheck.Click += this.checkClick;
 
-            // Clear
-            this.btnClear = new Btn("Clear", this);
-            this.btnClear.Click += this.clearClick;
+            this.btnClear = new Btn("Clear", this, this.clearClick);
 
-            // The colour buttons
             this.btnColorBlack = new Btn("", this);
             this.btnColorBlack.BackColor = this.puzzleBoard.Painter.GetColor(Field.Black);
             this.btnColorBlack.Size = new Size(this.btnColorBlack.Height, this.btnColorBlack.Height);
@@ -124,19 +109,14 @@ namespace Picross.UI
             this.btnColorEmpty.Size = this.btnColorBlack.Size;
             this.btnColorEmpty.MouseDown += this.colorBtnMouseDown;
 
-            // The move button
-            this.btnMove = new Btn("Move", this);
+            this.btnMove = new Btn("Move", this, this.moveClick);
             if (!this.puzzleBoard.EditorMode)
                 this.btnMove.Hide();
-            this.btnMove.Click += this.moveClick;
 
-            // The size button
-            this.btnSize = new Btn("Change size", this);
+            this.btnSize = new Btn("Change size", this, this.sizeClick);
             if (!this.puzzleBoard.EditorMode)
                 this.btnSize.Hide();
-            this.btnSize.Click += this.sizeClick;
 
-            // The settings button
             this.btnSettings = new Btn("Settings", this);
             this.btnSettings.Click += (o, e) => { this.ShowUserControl<SettingsControl>(); };
         }
